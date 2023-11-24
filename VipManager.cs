@@ -18,22 +18,13 @@ public class VipManager : BasePlugin, IPluginConfig<VipManagerConfig>
 
   private string DatabaseConnectionString = string.Empty;
 
-  private Dictionary<string, string> PlayerAdmins = new();
-
+  private readonly Dictionary<string, string> PlayerAdmins = new();
+  private DateTime reloadCommandCooldown = new();
 
   public override void Load(bool hotReload)
   {
     RegisterListener<Listeners.OnClientPutInServer>(OnClientPutInServer);
-    AddCommand($"css_teste", "Skins info", (player, info) =>
-    {
-      if (player == null) return;
-      var steamid = new SteamID(player.SteamID);
-      var teste = AdminManager.GetPlayerAdminData(steamid);
-      if (teste != null)
-      {
-        Console.WriteLine(string.Join(", ", teste.Groups));
-      }
-    });
+    RegisterListener<Listeners.OnMapStart>(OnMapStart);
 
     BuildDatabaseConnectionString();
     TestDatabaseConnection();
@@ -50,6 +41,10 @@ public class VipManager : BasePlugin, IPluginConfig<VipManagerConfig>
 
     }
 
+  }
+  private void OnMapStart(string mapName)
+  {
+    TestDatabaseConnection();
   }
 
   private void BuildDatabaseConnectionString()
@@ -96,7 +91,7 @@ public class VipManager : BasePlugin, IPluginConfig<VipManagerConfig>
 
       try
       {
-        string createTable1 = "CREATE TABLE IF NOT EXISTS `vip_manager` (`id` INT NOT NULL AUTO_INCREMENT, `steamid` varchar(64) NOT NULL, `groups` varchar(200) NOT NULL, `discord_id` varchar(100), `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, end_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci";
+        string createTable1 = "CREATE TABLE IF NOT EXISTS `vip_manager` (`id` INT NOT NULL AUTO_INCREMENT, `steamid` varchar(64) NOT NULL, `groups` varchar(200) NOT NULL, `discord_id` varchar(100), `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, end_date timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci";
 
 
         await connection.ExecuteAsync(createTable1, transaction: transaction);
@@ -137,38 +132,54 @@ public class VipManager : BasePlugin, IPluginConfig<VipManagerConfig>
   }
   async private void GetAdminsFromDatabase()
   {
-    using var connection = new MySqlConnection(DatabaseConnectionString);
-
-    await connection.OpenAsync();
-    string query = "select steamid, GROUP_CONCAT(`groups`) as `groups` from `vip_manager`  GROUP BY steamid";
-
-    var queryResult = await connection.QueryAsync(query);
-
-    if (queryResult != null)
+    try
     {
-      foreach (var result in queryResult.ToList())
+
+      using var connection = new MySqlConnection(DatabaseConnectionString);
+
+      await connection.OpenAsync();
+
+      string query = "DELETE FROM `vip_manager` WHERE end_date <= NOW()";
+
+      await connection.ExecuteAsync(query);
+
+      query = "select steamid, GROUP_CONCAT(`groups`) as `groups` from `vip_manager` GROUP BY steamid";
+
+      var queryResult = await connection.QueryAsync(query);
+
+      if (queryResult != null)
       {
-
-        if (result.groups.Length == 0) Console.WriteLine($"{Config.Prefix} there is a wrong value at  {result.steamid} - {result.groups}");
-
-        if (!PlayerAdmins.ContainsKey(result.steamid))
+        foreach (var result in queryResult.ToList())
         {
-          PlayerAdmins.Add(result.steamid, result.groups);
-        }
-        else
-        {
-          PlayerAdmins[result.steamid] = result.groups;
+
+          if (result.groups.Length == 0) Console.WriteLine($"{Config.Prefix} there is a wrong value at  {result.steamid} - {result.groups}");
+
+          if (!PlayerAdmins.ContainsKey(result.steamid))
+          {
+            PlayerAdmins.Add(result.steamid, result.groups);
+          }
+          else
+          {
+            PlayerAdmins[result.steamid] = result.groups;
+          }
         }
       }
+      await connection.CloseAsync();
     }
-    await connection.CloseAsync();
+    catch (Exception e)
+    {
+      Server.PrintToConsole($"{Config.Prefix} Erro on loading admins" + e);
+    }
+
   }
 
-  [ConsoleCommand("css_admin_add", "Set Admin")]
-  [CommandHelper(minArgs: 2, usage: "[steamid64] [group]", whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
+  [ConsoleCommand("css_vm_add", "Set Admin")]
+  [CommandHelper(minArgs: 3, usage: "[steamid64] [group] [time (minutes)]", whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
   [RequiresPermissions("#css/admin")]
   public async void SetAdmin(CCSPlayerController? player, CommandInfo command)
   {
+    string[] args = command.ArgString.Split(" ");
+
     try
     {
       using var connection = new MySqlConnection(DatabaseConnectionString);
@@ -176,7 +187,7 @@ public class VipManager : BasePlugin, IPluginConfig<VipManagerConfig>
 
       string query = "SELECT id FROM vip_manager WHERE steamid = @steamid AND `groups` = @groups";
 
-      IEnumerable<dynamic> result = await connection.QueryAsync(query, new { steamid = command.GetArg(0), groups = command.GetArg(1) });
+      IEnumerable<dynamic> result = await connection.QueryAsync(query, new { steamid = args[0], groups = args[1] });
 
 
       if (result != null && result.AsList().Count > 0)
@@ -185,11 +196,11 @@ public class VipManager : BasePlugin, IPluginConfig<VipManagerConfig>
         return;
       }
 
-      query = $"INSERT INTO `vip_manager` (`steamid`, `groups`) VALUES(@steamid, @groups)";
+      query = $"INSERT INTO `vip_manager` (`steamid`, `groups`, `end_date`) VALUES(@steamid, @groups, DATE_ADD(NOW(), INTERVAL @time MINUTE))";
 
-      await connection.ExecuteAsync(query, new { steamid = command.GetArg(0), groups = command.GetArg(1) });
+      await connection.ExecuteAsync(query, new { steamid = args[0], groups = args[1], time = args[2] });
 
-      ReloadUserPermissions(command.GetArg(0), "add", command.GetArg(1), command);
+      ReloadUserPermissions(args[0], "add", args[1], command);
 
       command.ReplyToCommand($"{Config.Prefix} Admin has been added");
 
@@ -203,11 +214,13 @@ public class VipManager : BasePlugin, IPluginConfig<VipManagerConfig>
     }
   }
 
-  [ConsoleCommand("css_admin_remove", "Remove Admin")]
+  [ConsoleCommand("css_vm_remove", "Remove Admin")]
   [CommandHelper(minArgs: 2, usage: "[steamid64] [group]", whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
   [RequiresPermissions("#css/admin")]
   public async void RemoveAdmin(CCSPlayerController? player, CommandInfo command)
   {
+    string[] args = command.ArgString.Split(" ");
+
     try
     {
       using var connection = new MySqlConnection(DatabaseConnectionString);
@@ -215,7 +228,7 @@ public class VipManager : BasePlugin, IPluginConfig<VipManagerConfig>
 
       string query = "SELECT id FROM vip_manager WHERE steamid = @steamid AND `groups` = @groups";
 
-      IEnumerable<dynamic> result = await connection.QueryAsync(query, new { steamid = command.GetArg(0), groups = command.GetArg(1) });
+      IEnumerable<dynamic> result = await connection.QueryAsync(query, new { steamid = args[0], groups = args[1] });
 
 
       if (result == null || result.AsList().Count == 0)
@@ -226,9 +239,9 @@ public class VipManager : BasePlugin, IPluginConfig<VipManagerConfig>
 
       query = $"DELETE FROM `vip_manager` WHERE steamid = @steamid AND `groups` = @groups";
 
-      await connection.ExecuteAsync(query, new { steamid = command.GetArg(0), groups = command.GetArg(1) });
+      await connection.ExecuteAsync(query, new { steamid = args[0], groups = args[1] });
 
-      ReloadUserPermissions(command.GetArg(0), "remove", command.GetArg(1), command);
+      ReloadUserPermissions(args[0], "remove", args[1], command);
 
       command.ReplyToCommand($"{Config.Prefix} Admin has been deleted");
 
@@ -242,6 +255,25 @@ public class VipManager : BasePlugin, IPluginConfig<VipManagerConfig>
     }
   }
 
+  [ConsoleCommand($"css_vm_reload", "Reload Admins")]
+  [RequiresPermissions("#css/admin")]
+  public void ReloadAdmins(CCSPlayerController? player, CommandInfo command)
+  {
+
+    if (DateTime.UtcNow >= reloadCommandCooldown.AddSeconds(60))
+    {
+      PlayerAdmins.Clear();
+      GetAdminsFromDatabase();
+      reloadCommandCooldown = DateTime.UtcNow;
+
+      command.ReplyToCommand($"{Config.Prefix} Admins reloaded successfully");
+
+      return;
+    }
+
+    command.ReplyToCommand($"{Config.Prefix} You are on a cooldown...wait 60 seconds and try again");
+
+  }
   private void ReloadUserPermissions(string steamId64, string type, string groups, CommandInfo command)
   {
     SteamID.TryParse(steamId64, out SteamID? steamid);
