@@ -3,7 +3,9 @@ using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Entities;
 using MySqlConnector;
 using Dapper;
-
+using CounterStrikeSharp.API.Core.Attributes.Registration;
+using CounterStrikeSharp.API.Modules.Commands;
+using CounterStrikeSharp.API;
 
 namespace VipManager;
 public class VipManager : BasePlugin, IPluginConfig<VipManagerConfig>
@@ -94,7 +96,7 @@ public class VipManager : BasePlugin, IPluginConfig<VipManagerConfig>
 
       try
       {
-        string createTable1 = "CREATE TABLE IF NOT EXISTS `vip_manager` (`id` INT NOT NULL AUTO_INCREMENT, `steamid` varchar(64) NOT NULL, `groups` varchar(200) NOT NULL, PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci";
+        string createTable1 = "CREATE TABLE IF NOT EXISTS `vip_manager` (`id` INT NOT NULL AUTO_INCREMENT, `steamid` varchar(64) NOT NULL, `groups` varchar(200) NOT NULL, `discord_id` varchar(100), `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, end_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci";
 
 
         await connection.ExecuteAsync(createTable1, transaction: transaction);
@@ -161,4 +163,117 @@ public class VipManager : BasePlugin, IPluginConfig<VipManagerConfig>
     }
     await connection.CloseAsync();
   }
+
+  [ConsoleCommand("css_admin_add", "Set Admin")]
+  [CommandHelper(minArgs: 2, usage: "[steamid64] [group]", whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
+  [RequiresPermissions("#css/admin")]
+  public async void SetAdmin(CCSPlayerController? player, CommandInfo command)
+  {
+    try
+    {
+      using var connection = new MySqlConnection(DatabaseConnectionString);
+      await connection.OpenAsync();
+
+      string query = "SELECT id FROM vip_manager WHERE steamid = @steamid AND `groups` = @groups";
+
+      IEnumerable<dynamic> result = await connection.QueryAsync(query, new { steamid = command.GetArg(0), groups = command.GetArg(1) });
+
+
+      if (result != null && result.AsList().Count > 0)
+      {
+        command.ReplyToCommand($"{Config.Prefix} There is already a registry with this steamid and group!");
+        return;
+      }
+
+      query = $"INSERT INTO `vip_manager` (`steamid`, `groups`) VALUES(@steamid, @groups)";
+
+      await connection.ExecuteAsync(query, new { steamid = command.GetArg(0), groups = command.GetArg(1) });
+
+      ReloadUserPermissions(command.GetArg(0), "add", command.GetArg(1), command);
+
+      command.ReplyToCommand($"{Config.Prefix} Admin has been added");
+
+      await connection.CloseAsync();
+    }
+    catch (Exception e)
+    {
+      Console.WriteLine(e);
+      command.ReplyToCommand($"{Config.Prefix} There is already a registry with this steamid and group!");
+      return;
+    }
+  }
+
+  [ConsoleCommand("css_admin_remove", "Remove Admin")]
+  [CommandHelper(minArgs: 2, usage: "[steamid64] [group]", whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
+  [RequiresPermissions("#css/admin")]
+  public async void RemoveAdmin(CCSPlayerController? player, CommandInfo command)
+  {
+    try
+    {
+      using var connection = new MySqlConnection(DatabaseConnectionString);
+      await connection.OpenAsync();
+
+      string query = "SELECT id FROM vip_manager WHERE steamid = @steamid AND `groups` = @groups";
+
+      IEnumerable<dynamic> result = await connection.QueryAsync(query, new { steamid = command.GetArg(0), groups = command.GetArg(1) });
+
+
+      if (result == null || result.AsList().Count == 0)
+      {
+        command.ReplyToCommand($"{Config.Prefix} There is no admin with this steamID and group!");
+        return;
+      }
+
+      query = $"DELETE FROM `vip_manager` WHERE steamid = @steamid AND `groups` = @groups";
+
+      await connection.ExecuteAsync(query, new { steamid = command.GetArg(0), groups = command.GetArg(1) });
+
+      ReloadUserPermissions(command.GetArg(0), "remove", command.GetArg(1), command);
+
+      command.ReplyToCommand($"{Config.Prefix} Admin has been deleted");
+
+      await connection.CloseAsync();
+    }
+    catch (Exception e)
+    {
+      Console.WriteLine(e);
+      command.ReplyToCommand($"{Config.Prefix} There is already a registry with this steamid and group!");
+      return;
+    }
+  }
+
+  private void ReloadUserPermissions(string steamId64, string type, string groups, CommandInfo command)
+  {
+    SteamID.TryParse(steamId64, out SteamID? steamid);
+
+    if (steamid == null) return;
+
+    if (type == "add")
+    {
+      if (PlayerAdmins.ContainsKey(steamId64))
+      {
+        if (PlayerAdmins[steamId64] != groups)
+        {
+          PlayerAdmins[steamId64] += groups;
+        }
+      }
+      else
+      {
+        PlayerAdmins.Add(steamId64, groups);
+      }
+
+      AdminManager.AddPlayerToGroup(steamid, PlayerAdmins[steamId64].Split(","));
+    }
+    else if (type == "remove")
+    {
+      if (PlayerAdmins.ContainsKey(steamId64) && PlayerAdmins[steamId64] == groups)
+      {
+        PlayerAdmins.Remove(steamId64);
+      }
+
+      AdminManager.RemovePlayerFromGroup(steamid, true, groups);
+
+    }
+  }
+
 }
