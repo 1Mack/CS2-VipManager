@@ -21,7 +21,7 @@ The config is created automatically. Path: csgo/addons/counterstrikesharp/config
 ```
 
 # Commands
-`css_vm_remove [steamid64] [group]` - remove an admin. The `#css/admin` group is required for use.
-`css_vm_add [steamid64] [group]` - adds an admin. The `#css/admin` group is required for use.
-`css_vm_reload` - reloads the configuration. The `#css/admin` group is required for use.
+`css_vm_remove [steamid64] [group]` - remove an admin. The `#css/admin` group is required for use.<br />
+`css_vm_add [steamid64] [group]` - adds an admin. The `#css/admin` group is required for use.<br />
+`css_vm_reload` - reloads the configuration. The `#css/admin` group is required for use.<br />
 
