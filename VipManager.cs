@@ -32,7 +32,7 @@ public class VipManager : BasePlugin, IPluginConfig<VipManagerConfig>
   public override string ModuleName => "VipManager";
   public override string ModuleDescription => "Set admin by database";
   public override string ModuleAuthor => "1MaaaaaacK";
-  public override string ModuleVersion => "1.1";
+  public override string ModuleVersion => "1.2";
   public required VipManagerConfig Config { get; set; }
 
   private string DatabaseConnectionString = string.Empty;
@@ -44,6 +44,13 @@ public class VipManager : BasePlugin, IPluginConfig<VipManagerConfig>
   {
     RegisterListener<Listeners.OnClientPutInServer>(OnClientPutInServer);
     RegisterListener<Listeners.OnMapStart>(OnMapStart);
+
+    AddCommand($"css_{Config.CommandsPrefix.Add}", "Set Admin", SetAdmin);
+    AddCommand($"css_{Config.CommandsPrefix.Remove}", "Remove Admin", RemoveAdmin);
+    AddCommand($"css_{Config.CommandsPrefix.Reload}", "Reload Admins", ReloadAdmins);
+    AddCommand($"css_{Config.CommandsPrefix.Test}", "Test VIP", TesteVip);
+    AddCommand($"css_{Config.CommandsPrefix.Status}", "Check your vip time left", StatusVip);
+
     BuildDatabaseConnectionString();
     TestDatabaseConnection();
   }
@@ -71,11 +78,11 @@ public class VipManager : BasePlugin, IPluginConfig<VipManagerConfig>
   {
     var builder = new MySqlConnectionStringBuilder
     {
-      Server = Config.DatabaseHost,
-      UserID = Config.DatabaseUser,
-      Password = Config.DatabasePassword,
-      Database = Config.DatabaseName,
-      Port = (uint)Config.DatabasePort,
+      Server = Config.Database.Host,
+      UserID = Config.Database.User,
+      Password = Config.Database.Password,
+      Database = Config.Database.Name,
+      Port = (uint)Config.Database.Port,
     };
 
     DatabaseConnectionString = builder.ConnectionString;
@@ -146,9 +153,19 @@ public class VipManager : BasePlugin, IPluginConfig<VipManagerConfig>
 
   public void OnConfigParsed(VipManagerConfig config)
   {
-    if (config.DatabaseHost.Length < 1 || config.DatabaseName.Length < 1 || config.DatabaseUser.Length < 1)
+    if (config.Version != 4) throw new Exception($"You have a wrong config version. Delete it and restart the server to get the right version (4)!");
+
+    if (config.Database.Host.Length < 1 || config.Database.Name.Length < 1 || config.Database.User.Length < 1)
     {
       throw new Exception($"You need to setup Database credentials in config!");
+    }
+    else if (config.CommandsPrefix.Add.Length < 1 ||
+    config.CommandsPrefix.Remove.Length < 1 ||
+    config.CommandsPrefix.Status.Length < 1 ||
+    config.CommandsPrefix.Reload.Length < 1 ||
+    config.CommandsPrefix.Test.Length < 1)
+    {
+      throw new Exception($"You need to setup CommandsPrefix in config!");
     }
     Config = config;
   }
@@ -191,7 +208,6 @@ public class VipManager : BasePlugin, IPluginConfig<VipManagerConfig>
 
   }
 
-  [ConsoleCommand("css_vm_add", "Set Admin")]
   [CommandHelper(minArgs: 3, usage: "[steamid64] [group] [time (minutes)]", whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
   [RequiresPermissions("#css/admin")]
   public async void SetAdmin(CCSPlayerController? player, CommandInfo command)
@@ -232,7 +248,6 @@ public class VipManager : BasePlugin, IPluginConfig<VipManagerConfig>
     }
   }
 
-  [ConsoleCommand("css_vm_remove", "Remove Admin")]
   [CommandHelper(minArgs: 2, usage: "[steamid64] [group]", whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
   [RequiresPermissions("#css/admin")]
   public async void RemoveAdmin(CCSPlayerController? player, CommandInfo command)
@@ -273,7 +288,6 @@ public class VipManager : BasePlugin, IPluginConfig<VipManagerConfig>
     }
   }
 
-  [ConsoleCommand($"css_vm_reload", "Reload Admins")]
   [RequiresPermissions("#css/admin")]
   public void ReloadAdmins(CCSPlayerController? player, CommandInfo command)
   {
@@ -293,7 +307,6 @@ public class VipManager : BasePlugin, IPluginConfig<VipManagerConfig>
 
   }
 
-  [ConsoleCommand($"css_vm_test", "Test VIP")]
   public async void TesteVip(CCSPlayerController? player, CommandInfo command)
   {
     if (player == null || !player.IsValid) return;
@@ -304,7 +317,7 @@ public class VipManager : BasePlugin, IPluginConfig<VipManagerConfig>
     {
       commandCooldown[playerIndex] = DateTime.UtcNow;
 
-      if (Config.VipTestTime == 0 || Config.VipTestGroup.Length == 0)
+      if (Config.VipTest.Time == 0 || Config.VipTest.Group.Length == 0)
       {
         command.ReplyToCommand($"{Config.Prefix} This command is blocked by the server!");
         return;
@@ -329,7 +342,7 @@ public class VipManager : BasePlugin, IPluginConfig<VipManagerConfig>
 
       query = "SELECT id FROM vip_manager WHERE steamid = @steamid and `groups` = @groups";
 
-      result = await connection.QueryAsync(query, new { steamid = steamid64, groups = Config.VipTestGroup });
+      result = await connection.QueryAsync(query, new { steamid = steamid64, groups = Config.VipTest.Group });
 
 
       if (result != null && result.AsList().Count > 0)
@@ -340,15 +353,15 @@ public class VipManager : BasePlugin, IPluginConfig<VipManagerConfig>
 
       query = "INSERT INTO `vip_manager_testvip` (`steamid`, `end_date`) VALUES(@steamid, DATE_ADD(NOW(), INTERVAL @time MINUTE))";
 
-      await connection.ExecuteAsync(query, new { steamid = steamid64, time = Config.VipTestTime });
+      await connection.ExecuteAsync(query, new { steamid = steamid64, time = Config.VipTest.Time });
 
       query = "INSERT INTO `vip_manager` (`steamid`, `groups`, `end_date`) VALUES(@steamid, @groups, DATE_ADD(NOW(), INTERVAL @time MINUTE))";
 
-      await connection.ExecuteAsync(query, new { steamid = steamid64, groups = Config.VipTestGroup, time = Config.VipTestTime });
+      await connection.ExecuteAsync(query, new { steamid = steamid64, groups = Config.VipTest.Group, time = Config.VipTest.Time });
 
-      ReloadUserPermissions(steamid64, "add", command, Config.VipTestGroup);
+      ReloadUserPermissions(steamid64, "add", command, Config.VipTest.Group);
 
-      command.ReplyToCommand($"{Config.Prefix} You have activated your VIP successfully for {Config.VipTestTime} minutes");
+      command.ReplyToCommand($"{Config.Prefix} You have activated your VIP successfully for {Config.VipTest.Time} minutes");
       return;
     }
 
@@ -357,7 +370,6 @@ public class VipManager : BasePlugin, IPluginConfig<VipManagerConfig>
 
   }
 
-  [ConsoleCommand("css_vm_status", "Check your vip time left")]
   [RequiresPermissions("#css/vip")]
   public void StatusVip(CCSPlayerController? player, CommandInfo command)
   {
@@ -420,7 +432,7 @@ public class VipManager : BasePlugin, IPluginConfig<VipManagerConfig>
     {
       arg0 = steamId64;
       arg1 = group;
-      arg2 = Config.VipTestTime;
+      arg2 = Config.VipTest.Time;
     }
     else
     {
