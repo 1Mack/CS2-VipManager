@@ -25,7 +25,7 @@ public partial class VipManager : BasePlugin, IPluginConfig<VipManagerConfig>
   public override string ModuleName => "VipManager";
   public override string ModuleDescription => "Set admin by database";
   public override string ModuleAuthor => "1MaaaaaacK";
-  public override string ModuleVersion => "1.2";
+  public override string ModuleVersion => "1.3";
   public static int ConfigVersion => 5;
 
   private string DatabaseConnectionString = string.Empty;
