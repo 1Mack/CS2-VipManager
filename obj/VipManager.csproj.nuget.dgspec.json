@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\marcos\\Documents\\mack\\csgo\\cs2\\VipManager\\VipManager.csproj": {}
+    "C:\\Users\\marcos\\Documents\\mack\\csgo\\cs2\\plugins\\VipManager\\VipManager.csproj": {}
   },
   "projects": {
-    "C:\\Users\\marcos\\Documents\\mack\\csgo\\cs2\\VipManager\\VipManager.csproj": {
+    "C:\\Users\\marcos\\Documents\\mack\\csgo\\cs2\\plugins\\VipManager\\VipManager.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\marcos\\Documents\\mack\\csgo\\cs2\\VipManager\\VipManager.csproj",
+        "projectUniqueName": "C:\\Users\\marcos\\Documents\\mack\\csgo\\cs2\\plugins\\VipManager\\VipManager.csproj",
         "projectName": "VipManager",
-        "projectPath": "C:\\Users\\marcos\\Documents\\mack\\csgo\\cs2\\VipManager\\VipManager.csproj",
+        "projectPath": "C:\\Users\\marcos\\Documents\\mack\\csgo\\cs2\\plugins\\VipManager\\VipManager.csproj",
         "packagesPath": "C:\\Users\\marcos\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\marcos\\Documents\\mack\\csgo\\cs2\\VipManager\\obj\\",
+        "outputPath": "C:\\Users\\marcos\\Documents\\mack\\csgo\\cs2\\plugins\\VipManager\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\marcos\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -40,7 +40,7 @@
           "dependencies": {
             "CounterStrikeSharp.API": {
               "target": "Package",
-              "version": "[1.0.77, )"
+              "version": "[1.0.110, )"
             },
             "Dapper": {
               "target": "Package",

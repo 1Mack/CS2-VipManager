@@ -2,7 +2,7 @@
   "version": 3,
   "targets": {
     "net7.0": {
-      "CounterStrikeSharp.API/1.0.77": {
+      "CounterStrikeSharp.API/1.0.110": {
         "type": "package",
         "dependencies": {
           "McMaster.NETCore.Plugins": "1.4.0",
@@ -840,14 +840,14 @@
     }
   },
   "libraries": {
-    "CounterStrikeSharp.API/1.0.77": {
-      "sha512": "VeeRJUIn5InhCdXU2n2Ao/Jsz11ukXpSmm7kpt6BIJNdjzWBnJVcXG+VUSOU/n49eX7xN/gvyb1GC+F9dEVfTA==",
+    "CounterStrikeSharp.API/1.0.110": {
+      "sha512": "HLsuhfy81d3Ln5WF2i8lzb8Tl8RLcasYqUIA7zJ8M7A0DYoS89QlGCq3IoLkh7+VIBPZtSDLvxCruAaTi52vUQ==",
       "type": "package",
-      "path": "counterstrikesharp.api/1.0.77",
+      "path": "counterstrikesharp.api/1.0.110",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
-        "counterstrikesharp.api.1.0.77.nupkg.sha512",
+        "counterstrikesharp.api.1.0.110.nupkg.sha512",
         "counterstrikesharp.api.nuspec",
         "lib/net7.0/CounterStrikeSharp.API.dll",
         "lib/net7.0/CounterStrikeSharp.API.runtimeconfig.json",
@@ -2126,7 +2126,7 @@
   },
   "projectFileDependencyGroups": {
     "net7.0": [
-      "CounterStrikeSharp.API >= 1.0.77",
+      "CounterStrikeSharp.API >= 1.0.110",
       "Dapper >= 2.1.24",
       "MySqlConnector >= 2.3.1"
     ]
@@ -2137,11 +2137,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\marcos\\Documents\\mack\\csgo\\cs2\\VipManager\\VipManager.csproj",
+      "projectUniqueName": "C:\\Users\\marcos\\Documents\\mack\\csgo\\cs2\\plugins\\VipManager\\VipManager.csproj",
       "projectName": "VipManager",
-      "projectPath": "C:\\Users\\marcos\\Documents\\mack\\csgo\\cs2\\VipManager\\VipManager.csproj",
+      "projectPath": "C:\\Users\\marcos\\Documents\\mack\\csgo\\cs2\\plugins\\VipManager\\VipManager.csproj",
       "packagesPath": "C:\\Users\\marcos\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\marcos\\Documents\\mack\\csgo\\cs2\\VipManager\\obj\\",
+      "outputPath": "C:\\Users\\marcos\\Documents\\mack\\csgo\\cs2\\plugins\\VipManager\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\marcos\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -2170,7 +2170,7 @@
         "dependencies": {
           "CounterStrikeSharp.API": {
             "target": "Package",
-            "version": "[1.0.77, )"
+            "version": "[1.0.110, )"
           },
           "Dapper": {
             "target": "Package",

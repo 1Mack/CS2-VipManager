@@ -1,10 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "hO0ikPiv+u7clvI1J/sNp6FNC37AFPM+p41s1vbfB1/Nv6RFTEoJArHVjhZg02Q7qItlTTyrGtQk9YySC4FYmQ==",
+  "dgSpecHash": "UXE6QF26wxt1+oEV3nMlXVFVQmiVlF3Wv5eJpwXH4uo71CF9TSZA7tx4ORlsWJVWRSUq0NvXpLq9aJwvA6Jv1g==",
   "success": true,
-  "projectFilePath": "C:\\Users\\marcos\\Documents\\mack\\csgo\\cs2\\VipManager\\VipManager.csproj",
+  "projectFilePath": "C:\\Users\\marcos\\Documents\\mack\\csgo\\cs2\\plugins\\VipManager\\VipManager.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\marcos\\.nuget\\packages\\counterstrikesharp.api\\1.0.77\\counterstrikesharp.api.1.0.77.nupkg.sha512",
+    "C:\\Users\\marcos\\.nuget\\packages\\counterstrikesharp.api\\1.0.110\\counterstrikesharp.api.1.0.110.nupkg.sha512",
     "C:\\Users\\marcos\\.nuget\\packages\\dapper\\2.1.24\\dapper.2.1.24.nupkg.sha512",
     "C:\\Users\\marcos\\.nuget\\packages\\mcmaster.netcore.plugins\\1.4.0\\mcmaster.netcore.plugins.1.4.0.nupkg.sha512",
     "C:\\Users\\marcos\\.nuget\\packages\\microsoft.csharp\\4.7.0\\microsoft.csharp.4.7.0.nupkg.sha512",

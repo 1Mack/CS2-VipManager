@@ -8,7 +8,7 @@
     ".NETCoreApp,Version=v7.0": {
       "VipManager/1.0.0": {
         "dependencies": {
-          "CounterStrikeSharp.API": "1.0.77",
+          "CounterStrikeSharp.API": "1.0.110",
           "Dapper": "2.1.24",
           "MySqlConnector": "2.3.1"
         },
@@ -16,7 +16,7 @@
           "VipManager.dll": {}
         }
       },
-      "CounterStrikeSharp.API/1.0.77": {
+      "CounterStrikeSharp.API/1.0.110": {
         "dependencies": {
           "McMaster.NETCore.Plugins": "1.4.0",
           "Microsoft.CSharp": "4.7.0",
@@ -31,8 +31,8 @@
         },
         "runtime": {
           "lib/net7.0/CounterStrikeSharp.API.dll": {
-            "assemblyVersion": "1.0.77.0",
-            "fileVersion": "1.0.77.0"
+            "assemblyVersion": "1.0.110.0",
+            "fileVersion": "1.0.110.0"
           }
         }
       },
@@ -517,12 +517,12 @@
       "serviceable": false,
       "sha512": ""
     },
-    "CounterStrikeSharp.API/1.0.77": {
+    "CounterStrikeSharp.API/1.0.110": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-VeeRJUIn5InhCdXU2n2Ao/Jsz11ukXpSmm7kpt6BIJNdjzWBnJVcXG+VUSOU/n49eX7xN/gvyb1GC+F9dEVfTA==",
-      "path": "counterstrikesharp.api/1.0.77",
-      "hashPath": "counterstrikesharp.api.1.0.77.nupkg.sha512"
+      "sha512": "sha512-HLsuhfy81d3Ln5WF2i8lzb8Tl8RLcasYqUIA7zJ8M7A0DYoS89QlGCq3IoLkh7+VIBPZtSDLvxCruAaTi52vUQ==",
+      "path": "counterstrikesharp.api/1.0.110",
+      "hashPath": "counterstrikesharp.api.1.0.110.nupkg.sha512"
     },
     "Dapper/2.1.24": {
       "type": "package",

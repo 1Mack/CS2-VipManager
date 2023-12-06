@@ -6,271 +6,296 @@ using CounterStrikeSharp.API.Modules.Menu;
 using Dapper;
 using MySqlConnector;
 
-namespace VipManager
+namespace VipManager;
+
+public partial class VipManager
 {
-  public partial class VipManager
+  [CommandHelper(minArgs: 3, usage: "[steamid64 (without #css/)] [group] [time (minutes) or 0 (permanent)]", whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
+  public async void SetAdmin(CCSPlayerController? player, CommandInfo command)
   {
-    [CommandHelper(minArgs: 3, usage: "[steamid64] [group] [time (minutes)]", whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
-    public async void SetAdmin(CCSPlayerController? player, CommandInfo command)
+
+    if (!string.IsNullOrEmpty(Config.Commands.AddPermission) && !AdminManager.PlayerHasPermissions(player, Config.Commands.AddPermission.Split(";")))
     {
-      if (!string.IsNullOrEmpty(Config.Commands.AddPermission) && !AdminManager.PlayerHasPermissions(player, Config.Commands.AddPermission.Split(";")))
-      {
-        command.ReplyToCommand($"{Config.Prefix} {Config.Messages.MissingCommandPermission}");
-        return;
-      }
-      string[] args = command.ArgString.Split(" ");
-
-      try
-      {
-        using var connection = new MySqlConnection(DatabaseConnectionString);
-        await connection.OpenAsync();
-
-        string query = "SELECT id FROM vip_manager WHERE steamid = @steamid AND `groups` = @groups";
-
-        IEnumerable<dynamic> result = await connection.QueryAsync(query, new { steamid = args[0], groups = args[1] });
-
-
-        if (result != null && result.AsList().Count > 0)
-        {
-          command.ReplyToCommand($"{Config.Prefix} {Config.Messages.AlreadyRegistryWithSteamidAndGroup}");
-          return;
-        }
-
-        query = $"INSERT INTO `{Config.Database.PrefixVipManager}` (`steamid`, `groups`, `end_date`) VALUES(@steamid, @groups, DATE_ADD(NOW(), INTERVAL @time MINUTE))";
-
-        await connection.ExecuteAsync(query, new { steamid = args[0], groups = args[1], time = args[2] });
-
-        ReloadUserPermissions(args[0], args[1], "add", int.Parse(args[2]));
-
-        command.ReplyToCommand($"{Config.Prefix} {Config.Messages.AdminAddSuccess}");
-
-        await connection.CloseAsync();
-      }
-      catch (Exception e)
-      {
-        Console.WriteLine(e);
-        command.ReplyToCommand($"{Config.Prefix} {Config.Messages.InternalError}");
-        return;
-      }
+      command.ReplyToCommand($"{Config.Prefix} {ParseConfigMessage(Config.Messages.MissingCommandPermission, player)}");
+      return;
     }
-    [CommandHelper(minArgs: 2, usage: "[steamid64] [group]", whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
-    public async void RemoveAdmin(CCSPlayerController? player, CommandInfo command)
+    string[] args = command.ArgString.Split(" ");
+
+    GetPlayerClass? targetPlayer = GetPlayer(args[0], command);
+
+    if (targetPlayer == null) return;
+
+    try
     {
-      if (!string.IsNullOrEmpty(Config.Commands.RemovePermission) && !AdminManager.PlayerHasPermissions(player, Config.Commands.RemovePermission.Split(";")))
+      using var connection = new MySqlConnection(DatabaseConnectionString);
+      await connection.OpenAsync();
+
+      string query = "SELECT id FROM vip_manager WHERE steamid = @steamid AND `group` = @group";
+
+      args[1] = args[1].Replace("#css/", "");
+
+      IEnumerable<dynamic> result = await connection.QueryAsync(query, new { steamid = targetPlayer.Steamid, group = args[1] });
+
+
+      if (result != null && result.AsList().Count > 0)
       {
-        command.ReplyToCommand($"{Config.Prefix} {Config.Messages.MissingCommandPermission}");
+        command.ReplyToCommand($"{Config.Prefix} {ParseConfigMessage(Config.Messages.AlreadyRegistryWithSteamidAndGroup, player)}");
         return;
       }
-      string[] args = command.ArgString.Split(" ");
+      var endAt = args[2] == "0" ? 0 : DateTimeOffset.UtcNow.AddMinutes(int.Parse(args[2])).ToUnixTimeMilliseconds() / 1000;
+      var createdAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000;
 
-      try
-      {
-        using var connection = new MySqlConnection(DatabaseConnectionString);
-        await connection.OpenAsync();
+      query = $"INSERT INTO `{Config.Database.PrefixVipManager}` (`name`, `steamid`, `group`, `created_at`,`end_at`) VALUES(@name, @steamid, @group, @createdAt, @endAt)";
 
-        string query = $"SELECT id FROM `{Config.Database.PrefixVipManager}` WHERE steamid = @steamid AND `groups` = @groups";
+      await connection.ExecuteAsync(query, new { name = targetPlayer.Name, steamid = targetPlayer.Steamid, group = args[1], createdAt, endAt });
 
-        IEnumerable<dynamic> result = await connection.QueryAsync(query, new { steamid = args[0], groups = args[1] });
+      ReloadUserPermissions(args[0], args[1], "add", int.Parse(args[2]));
 
+      command.ReplyToCommand($"{Config.Prefix} {ParseConfigMessage(Config.Messages.AdminAddSuccess, player)}");
 
-        if (result == null || result.AsList().Count == 0)
-        {
-          command.ReplyToCommand($"{Config.Prefix} {Config.Messages.NoAdminWithSteamidAndGroup}");
-          return;
-        }
-
-        query = $"DELETE FROM `{Config.Database.PrefixVipManager}` WHERE steamid = @steamid AND `groups` = @groups";
-
-        await connection.ExecuteAsync(query, new { steamid = args[0], groups = args[1] });
-
-        ReloadUserPermissions(args[0], args[1], "remove");
-
-        command.ReplyToCommand($"{Config.Prefix} {Config.Messages.AdminDeleteSuccess}");
-
-        await connection.CloseAsync();
-      }
-      catch (Exception e)
-      {
-        Console.WriteLine(e);
-        command.ReplyToCommand($"{Config.Prefix} {Config.Messages.InternalError}");
-        return;
-      }
+      await connection.CloseAsync();
     }
-
-    [RequiresPermissions("#css/admin")]
-    public void ReloadAdmins(CCSPlayerController? player, CommandInfo command)
+    catch (Exception e)
     {
-      if (!string.IsNullOrEmpty(Config.Commands.ReloadPermission) && !AdminManager.PlayerHasPermissions(player, Config.Commands.ReloadPermission.Split(";")))
-      {
-        command.ReplyToCommand($"{Config.Prefix} {Config.Messages.MissingCommandPermission}");
-        return;
-      }
-      if (DateTime.UtcNow >= reloadCommandCooldown.AddSeconds(60))
-      {
-
-        GetAdminsFromDatabase();
-        reloadCommandCooldown = DateTime.UtcNow;
-
-        command.ReplyToCommand($"{Config.Prefix} {Config.Messages.AdminReloadSuccess}");
-
-        return;
-      }
-
-      command.ReplyToCommand($"{Config.Prefix} {Config.Messages.CoolDown}");
-
+      Console.WriteLine(e);
+      command.ReplyToCommand($"{Config.Prefix} {ParseConfigMessage(Config.Messages.InternalError, player)}");
+      return;
     }
+  }
+  [CommandHelper(minArgs: 2, usage: "[steamid64] [group]", whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
+  public async void RemoveAdmin(CCSPlayerController? player, CommandInfo command)
+  {
+    if (player == null || !player.IsValid) return;
 
-    public async void TesteVip(CCSPlayerController? player, CommandInfo command)
+    if (!string.IsNullOrEmpty(Config.Commands.RemovePermission) && !AdminManager.PlayerHasPermissions(player, Config.Commands.RemovePermission.Split(";")))
     {
-      if (!string.IsNullOrEmpty(Config.Commands.TestPermission) && !AdminManager.PlayerHasPermissions(player, Config.Commands.TestPermission.Split(";")))
+      command.ReplyToCommand($"{Config.Prefix} {ParseConfigMessage(Config.Messages.MissingCommandPermission, player)}");
+      return;
+    }
+    string[] args = command.ArgString.Split(" ");
+
+    GetPlayerClass? targetPlayer = GetPlayer(args[0], command);
+
+    if (targetPlayer == null) return;
+
+    args[1] = args[1].Replace("#css/", "");
+
+    try
+    {
+      using var connection = new MySqlConnection(DatabaseConnectionString);
+      await connection.OpenAsync();
+
+      string query = $"SELECT id FROM `{Config.Database.PrefixVipManager}` WHERE steamid = @steamid AND `group` = @group";
+
+      IEnumerable<dynamic> result = await connection.QueryAsync(query, new { steamid = targetPlayer.Steamid, group = args[1] });
+
+
+      if (result == null || result.AsList().Count == 0)
       {
-        command.ReplyToCommand($"{Config.Prefix} {Config.Messages.MissingCommandPermission}");
-        return;
-      }
-      if (player == null || !player.IsValid) return;
-
-      int playerIndex = (int)player.EntityIndex!.Value.Value;
-
-      if (commandCooldown != null && DateTime.UtcNow >= commandCooldown[playerIndex].AddSeconds(Config.CooldownRefreshCommandSeconds))
-      {
-        commandCooldown[playerIndex] = DateTime.UtcNow;
-
-        if (Config.VipTest.Time == 0 || Config.VipTest.Group.Length == 0)
-        {
-          command.ReplyToCommand($"{Config.Prefix} {Config.Messages.CommandBlocked}!");
-          return;
-        }
-
-        using var connection = new MySqlConnection(DatabaseConnectionString);
-        await connection.OpenAsync();
-
-        string query = $"SELECT id FROM `{Config.Database.PrefixTestVip}` WHERE steamid = @steamid";
-
-        var steamid = new SteamID(player.SteamID);
-
-        string steamid64 = steamid.SteamId64.ToString();
-
-        IEnumerable<dynamic> result = await connection.QueryAsync(query, new { steamid = steamid64 });
-
-        if (result != null && result.AsList().Count > 0)
-        {
-          command.ReplyToCommand($"{Config.Prefix} {Config.Messages.TestVipAlreadyClaimed}");
-          return;
-        }
-
-        query = "SELECT id FROM vip_manager WHERE steamid = @steamid and `groups` = @groups";
-
-        result = await connection.QueryAsync(query, new { steamid = steamid64, groups = Config.VipTest.Group });
-
-
-        if (result != null && result.AsList().Count > 0)
-        {
-          command.ReplyToCommand($"{Config.Prefix} {Config.Messages.AlreadyNormalVip}");
-          return;
-        }
-
-        query = $"INSERT INTO `{Config.Database.PrefixTestVip}` (`steamid`, `end_date`) VALUES(@steamid, DATE_ADD(NOW(), INTERVAL @time MINUTE))";
-
-        await connection.ExecuteAsync(query, new { steamid = steamid64, time = Config.VipTest.Time });
-
-        query = $"INSERT INTO `{Config.Database.PrefixVipManager}` (`steamid`, `groups`, `end_date`) VALUES(@steamid, @groups, DATE_ADD(NOW(), INTERVAL @time MINUTE))";
-
-        await connection.ExecuteAsync(query, new { steamid = steamid64, groups = Config.VipTest.Group, time = Config.VipTest.Time });
-
-        ReloadUserPermissions(steamid64, Config.VipTest.Group, "add", Config.VipTest.Time);
-
-        command.ReplyToCommand($"{Config.Prefix} {Config.Messages.TestVipActivated}");
+        command.ReplyToCommand($"{Config.Prefix} {ParseConfigMessage(Config.Messages.NoAdminWithSteamidAndGroup, player)}");
         return;
       }
 
+      query = $"DELETE FROM `{Config.Database.PrefixVipManager}` WHERE steamid = @steamid AND `group` = @group";
 
-      command.ReplyToCommand($"{Config.Prefix} {Config.Messages.CoolDown}");
+      await connection.ExecuteAsync(query, new { steamid = targetPlayer.Steamid, group = args[1] });
 
+      ReloadUserPermissions(args[0], args[1], "remove");
+
+      command.ReplyToCommand($"{Config.Prefix} {ParseConfigMessage(Config.Messages.AdminDeleteSuccess, player)}");
+
+      await connection.CloseAsync();
+    }
+    catch (Exception e)
+    {
+      Console.WriteLine(e);
+      command.ReplyToCommand($"{Config.Prefix} {ParseConfigMessage(Config.Messages.InternalError, player)}");
+      return;
+    }
+  }
+
+  [RequiresPermissions("#css/admin")]
+  public void ReloadAdmins(CCSPlayerController? player, CommandInfo command)
+  {
+    if (player == null || !player.IsValid) return;
+
+    if (!string.IsNullOrEmpty(Config.Commands.ReloadPermission) && !AdminManager.PlayerHasPermissions(player, Config.Commands.ReloadPermission.Split(";")))
+    {
+      command.ReplyToCommand($"{Config.Prefix} {ParseConfigMessage(Config.Messages.MissingCommandPermission, player)}");
+      return;
+    }
+    if (DateTime.UtcNow >= reloadCommandCooldown.AddSeconds(60))
+    {
+
+      GetAdminsFromDatabase();
+      reloadCommandCooldown = DateTime.UtcNow;
+
+      command.ReplyToCommand($"{Config.Prefix} {ParseConfigMessage(Config.Messages.AdminReloadSuccess, player)}");
+
+      return;
     }
 
-    [RequiresPermissions("#css/vip")]
-    public void StatusVip(CCSPlayerController? player, CommandInfo command)
+    command.ReplyToCommand($"{Config.Prefix} {ParseConfigMessage(Config.Messages.CoolDown, player)}");
+
+  }
+
+  public async void TesteVip(CCSPlayerController? player, CommandInfo command)
+  {
+    if (player == null || !player.IsValid) return;
+
+    if (!string.IsNullOrEmpty(Config.Commands.TestPermission) && !AdminManager.PlayerHasPermissions(player, Config.Commands.TestPermission.Split(";")))
     {
-      if (!string.IsNullOrEmpty(Config.Commands.StatusPermission) && !AdminManager.PlayerHasPermissions(player, Config.Commands.StatusPermission.Split(";")))
+      command.ReplyToCommand($"{Config.Prefix} {ParseConfigMessage(Config.Messages.MissingCommandPermission, player)}");
+      return;
+    }
+
+    int playerIndex = (int)player.Index;
+
+    if (commandCooldown != null && DateTime.UtcNow >= commandCooldown[playerIndex].AddSeconds(Config.CooldownRefreshCommandSeconds))
+    {
+      commandCooldown[playerIndex] = DateTime.UtcNow;
+
+      if (Config.VipTest.Time == 0 || Config.VipTest.Group.Length == 0)
       {
-        command.ReplyToCommand($"{Config.Prefix} {Config.Messages.MissingCommandPermission}");
+        command.ReplyToCommand($"{Config.Prefix} {ParseConfigMessage(Config.Messages.CommandBlocked, player)}!");
         return;
       }
-      if (player == null || !player.IsValid) return;
 
-      int playerIndex = (int)player.EntityIndex!.Value.Value;
+      using var connection = new MySqlConnection(DatabaseConnectionString);
+      await connection.OpenAsync();
 
-      if (commandCooldown != null && DateTime.UtcNow >= commandCooldown[playerIndex].AddSeconds(Config.CooldownRefreshCommandSeconds))
+      string query = $"SELECT id FROM `{Config.Database.PrefixTestVip}` WHERE steamid = @steamid";
+
+      var steamid = new SteamID(player.SteamID);
+
+      string steamid64 = steamid.SteamId64.ToString();
+
+      IEnumerable<dynamic> result = await connection.QueryAsync(query, new { steamid = steamid64 });
+
+      if (result != null && result.AsList().Count > 0)
       {
-        commandCooldown[playerIndex] = DateTime.UtcNow;
+        command.ReplyToCommand($"{Config.Prefix} {ParseConfigMessage(Config.Messages.TestVipAlreadyClaimed, player)}");
+        return;
+      }
 
-        string Steamid = new SteamID(player.SteamID).SteamId64.ToString();
+      query = "SELECT id FROM vip_manager WHERE steamid = @steamid and `group` = @group";
 
-        var findPlayerAdmins = PlayerAdmins.FindAll(obj => obj.SteamId == Steamid);
+      result = await connection.QueryAsync(query, new { steamid = steamid64, group = Config.VipTest.Group });
 
-        if (findPlayerAdmins == null)
+
+      if (result != null && result.AsList().Count > 0)
+      {
+        command.ReplyToCommand($"{Config.Prefix} {ParseConfigMessage(Config.Messages.AlreadyNormalVip, player)}");
+        return;
+      }
+
+      var endAt = Config.VipTest.Time == 0 ? 0 : DateTimeOffset.UtcNow.AddMinutes(Config.VipTest.Time).ToUnixTimeMilliseconds() / 1000;
+      var createdAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000;
+
+      query = $"INSERT INTO `{Config.Database.PrefixTestVip}` (`name`, `steamid`, `created_at`,`end_at`) VALUES(@name, @steamid, @createdAt, @endAt)";
+
+      await connection.ExecuteAsync(query, new { name = player.PlayerName, steamid = steamid64, time = Config.VipTest.Time, createdAt, endAt });
+
+      query = $"INSERT INTO `{Config.Database.PrefixVipManager}` (`name`, `steamid`, `group`, `created_at`, `end_at`) VALUES(@name, @steamid, @group, @createdAt, @endAt)";
+
+      await connection.ExecuteAsync(query, new { name = player.PlayerName, steamid = steamid64, group = Config.VipTest.Group, createdAt, endAt });
+
+      ReloadUserPermissions(steamid64, Config.VipTest.Group, "add", Config.VipTest.Time);
+
+      command.ReplyToCommand($"{Config.Prefix} {ParseConfigMessage(Config.Messages.TestVipActivated, player)}");
+      return;
+    }
+
+
+    command.ReplyToCommand($"{Config.Prefix} {ParseConfigMessage(Config.Messages.CoolDown, player)}");
+
+  }
+
+  [RequiresPermissions("#css/vip")]
+  public void StatusVip(CCSPlayerController? player, CommandInfo command)
+  {
+
+    if (player == null || !player.IsValid) return;
+
+    if (!string.IsNullOrEmpty(Config.Commands.StatusPermission) && !AdminManager.PlayerHasPermissions(player, Config.Commands.StatusPermission.Split(";")))
+    {
+      command.ReplyToCommand($"{Config.Prefix} {ParseConfigMessage(Config.Messages.MissingCommandPermission, player)}");
+      return;
+    }
+    if (player == null || !player.IsValid) return;
+
+    int playerIndex = (int)player.Index;
+
+    if (commandCooldown != null && DateTime.UtcNow >= commandCooldown[playerIndex].AddSeconds(Config.CooldownRefreshCommandSeconds))
+    {
+      commandCooldown[playerIndex] = DateTime.UtcNow;
+
+      string Steamid = new SteamID(player.SteamID).SteamId64.ToString();
+
+      var findPlayerAdmins = PlayerAdmins.FindAll(obj => obj.SteamId == Steamid);
+
+      if (findPlayerAdmins == null)
+      {
+        command.ReplyToCommand($"{Config.Prefix} {ParseConfigMessage(Config.Messages.NoAdminsRole, player)}");
+        return;
+      }
+      var chatMenu = new ChatMenu(Config.Messages.RolesMenu);
+
+      void handleMenu(CCSPlayerController player, ChatMenuOption option)
+      {
+        var getPlayer = findPlayerAdmins.Find(obj => obj.Group == option.Text.ToLower());
+        if (getPlayer == null)
         {
-          command.ReplyToCommand($"{Config.Prefix} {Config.Messages.NoAdminsRole}");
+          player.PrintToChat($"{Config.Prefix} {ParseConfigMessage(Config.Messages.RoleNotFound, player)}");
           return;
         }
-        var chatMenu = new ChatMenu("Your Admin Roles");
-
-        void handleMenu(CCSPlayerController player, ChatMenuOption option)
-        {
-          var getPlayer = findPlayerAdmins.Find(obj => obj.Groups == option.Text.ToLower());
-          if (getPlayer == null)
-          {
-            player.PrintToChat($"{Config.Prefix} {Config.Messages.RoleNotFound}");
-            return;
-          }
-
-          string statusMsg = Config.Messages.Status.Replace("{GROUP}", getPlayer.Groups).Replace("{TIMESTAMP", getPlayer.Timestamp).Replace("{ENDDATE}", getPlayer.EndDate);
-          player.PrintToChat(statusMsg);
-        }
-
-
-        foreach (var item in findPlayerAdmins)
-        {
-          chatMenu.AddMenuOption(item.Groups.ToUpper(), handleMenu);
-
-        }
-        ChatMenus.OpenMenu(player, chatMenu);
+        player.PrintToChat(ParseConfigMessage(Config.Messages.Status, player, null, getPlayer.Group, getPlayer.CreatedAt, getPlayer.EndAt));
       }
-      else
+
+
+      foreach (var item in findPlayerAdmins)
       {
-        command.ReplyToCommand($"{Config.Prefix} {Config.Messages.CoolDown}");
+        chatMenu.AddMenuOption(item.Group.ToUpper(), handleMenu);
 
       }
+      ChatMenus.OpenMenu(player, chatMenu);
+    }
+    else
+    {
+      command.ReplyToCommand($"{Config.Prefix} {ParseConfigMessage(Config.Messages.CoolDown, player)}");
 
     }
-    private void ReloadUserPermissions(string steamId64, string group, string type, int? time = null)
+
+  }
+  private void ReloadUserPermissions(string steamId64, string group, string type, int? time = null)
+  {
+
+    SteamID.TryParse(steamId64, out SteamID? steamid);
+
+    if (steamid == null) return;
+
+    if (type == "add" && time != null)
     {
-
-      SteamID.TryParse(steamId64, out SteamID? steamid);
-
-      if (steamid == null) return;
-
-      if (type == "add" && time != null)
+      if (PlayerAdmins.Find(obj => obj.SteamId == steamId64 && obj.Group == group) == null)
       {
-        if (PlayerAdmins.Find(obj => obj.SteamId == steamId64 && obj.Groups == group) == null)
-        {
-          PlayerAdminsClass playerAdminFormat = new() { SteamId = steamId64, Groups = group, Timestamp = DateTime.UtcNow.ToString(), EndDate = DateTime.UtcNow.AddMinutes((double)time).ToString() };
+        var endAt = time == 0 ? 0 : DateTimeOffset.UtcNow.AddMinutes((int)time).ToUnixTimeMilliseconds() / 1000;
+        var createdAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000;
+        PlayerAdminsClass playerAdminFormat = new() { SteamId = steamId64, Group = group, CreatedAt = ParseDateTime(createdAt.ToString()), EndAt = ParseDateTime(endAt.ToString()) };
 
-          PlayerAdmins.Add(playerAdminFormat);
-        }
-
-        AdminManager.AddPlayerToGroup(steamid, PlayerAdmins.FindAll(obj => obj.SteamId == steamId64).Select(obj => obj.Groups).ToArray());
+        PlayerAdmins.Add(playerAdminFormat);
       }
-      else if (type == "remove")
+
+      AdminManager.AddPlayerToGroup(steamid, PlayerAdmins.FindAll(obj => obj.SteamId == steamId64).Select(obj => $"#css/{obj.Group}").ToArray());
+    }
+    else if (type == "remove")
+    {
+      if (PlayerAdmins.Find(obj => obj.SteamId == steamId64 && obj.Group == group) == null)
       {
-        if (PlayerAdmins.Find(obj => obj.SteamId == steamId64 && obj.Groups == group) == null)
-        {
-          PlayerAdmins.RemoveAll(obj => obj.SteamId == steamId64 && obj.Groups == group);
-        }
-
-        AdminManager.RemovePlayerFromGroup(steamid, true, group);
-
+        PlayerAdmins.RemoveAll(obj => obj.SteamId == steamId64 && obj.Group == group);
       }
+
+      AdminManager.RemovePlayerFromGroup(steamid, true, $"#css/{group}");
+
     }
   }
 }
