@@ -104,11 +104,11 @@ public class VipManagerConfig : BasePluginConfig
 public class WelcomeMessage
 {
   [JsonPropertyName("WelcomePrivate")]
-  public string WelcomePrivate { get; set; } = "{DEFAULT}Welcome to the server, thanks for supporting the server being {GOLD}VIP";
+  public string WelcomePrivate { get; set; } = "{DEFAULT}Welcome to the server {PLAYERNAME}, thanks for supporting the server being {GOLD}{GROUP}";
   [JsonPropertyName("WelcomePublic")]
-  public string WelcomePublic { get; set; } = "{DEFAULT}VIP player {GREEN}connected";
+  public string WelcomePublic { get; set; } = "{DEFAULT}VIP player {OLIVE}{PLAYERNAME} {GREEN}connected";
   [JsonPropertyName("DisconnectedPublic")]
-  public string DisconnectPublic { get; set; } = "{DEFAULT}VIP player {RED}disconnect";
+  public string DisconnectPublic { get; set; } = "{DEFAULT}VIP player {OLIVE}{PLAYERNAME {RED}disconnect";
 
 }
 public class Database

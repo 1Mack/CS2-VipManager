@@ -11,13 +11,14 @@ public partial class VipManager
   {
     if (@event.Userid.IsValid && !@event.Bot && !@event.Userid.IsBot)
     {
+
       if (!string.IsNullOrEmpty(Config.WelcomeMessage.WelcomePrivate))
       {
-        @event.Userid.PrintToChat(Config.WelcomeMessage.WelcomePrivate);
+        @event.Userid.PrintToChat(ParseConfigMessage(Config.WelcomeMessage.WelcomePrivate, @event.Userid));
       }
       if (!string.IsNullOrEmpty(Config.WelcomeMessage.WelcomePublic))
       {
-        Server.PrintToChatAll(Config.WelcomeMessage.WelcomePublic);
+        Server.PrintToChatAll(ParseConfigMessage(Config.WelcomeMessage.WelcomePublic, @event.Userid));
       }
     }
 
@@ -29,7 +30,7 @@ public partial class VipManager
     {
       if (!string.IsNullOrEmpty(Config.WelcomeMessage.DisconnectPublic))
       {
-        Server.PrintToChatAll(Config.WelcomeMessage.DisconnectPublic);
+        Server.PrintToChatAll(ParseConfigMessage(Config.WelcomeMessage.DisconnectPublic, @event.Userid));
       }
     }
     return HookResult.Continue;
