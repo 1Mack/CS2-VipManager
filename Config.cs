@@ -194,7 +194,6 @@ public class Messages
   public string Status { get; set; } = "{DEFAULT}------------------------------{BREAKLINE}Role: {GROUP}{BREAKLINE}Created At: {TIMESTAMP}{BREAKLINE}End At: {ENDDATE}{BREAKLINE}------------------------------";
   [JsonPropertyName("VipPermanent")]
   public string VipPermanent { get; set; } = "PERMANENT";
-  public string PlayerBanned { get; set; } = "{DEFAULT}You are banned";
   [JsonPropertyName("MoreThanOnePlayerWithSameName")]
   public string MoreThanOnePlayerWithSameName { get; set; } = "{DEFAULT}There are more than one player with the same name you provided";
   [JsonPropertyName("NoPlayersFound")]
