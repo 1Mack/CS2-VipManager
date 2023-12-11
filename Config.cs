@@ -36,6 +36,16 @@ public partial class VipManager
 
       message.SetValue(config.Messages, ChatTags(config, value));
     }
+    foreach (var message in config.WelcomeMessage.GetType().GetProperties())
+    {
+      var value = message.GetValue(config.WelcomeMessage)?.ToString();
+
+
+      if (!string.IsNullOrEmpty(value))
+      {
+        message.SetValue(config.Messages, ChatTags(config, value));
+      }
+    }
     Config = config;
   }
   private static string ChatTags(VipManagerConfig config, string input)
