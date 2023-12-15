@@ -1,10 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "UXE6QF26wxt1+oEV3nMlXVFVQmiVlF3Wv5eJpwXH4uo71CF9TSZA7tx4ORlsWJVWRSUq0NvXpLq9aJwvA6Jv1g==",
+  "dgSpecHash": "RJVaFTJ2uXAfmDJNSGJUvoXe99J8B5gRQwm02tf6u8YTGp67MCvErQiT2teIi8s9D6W8gnI+RX+HX8axB2DnBQ==",
   "success": true,
   "projectFilePath": "C:\\Users\\marcos\\Documents\\mack\\csgo\\cs2\\plugins\\VipManager\\VipManager.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\marcos\\.nuget\\packages\\counterstrikesharp.api\\1.0.110\\counterstrikesharp.api.1.0.110.nupkg.sha512",
+    "C:\\Users\\marcos\\.nuget\\packages\\counterstrikesharp.api\\1.0.124\\counterstrikesharp.api.1.0.124.nupkg.sha512",
     "C:\\Users\\marcos\\.nuget\\packages\\dapper\\2.1.24\\dapper.2.1.24.nupkg.sha512",
     "C:\\Users\\marcos\\.nuget\\packages\\mcmaster.netcore.plugins\\1.4.0\\mcmaster.netcore.plugins.1.4.0.nupkg.sha512",
     "C:\\Users\\marcos\\.nuget\\packages\\microsoft.csharp\\4.7.0\\microsoft.csharp.4.7.0.nupkg.sha512",
@@ -25,6 +25,7 @@
     "C:\\Users\\marcos\\.nuget\\packages\\microsoft.extensions.filesystemglobbing\\7.0.0\\microsoft.extensions.filesystemglobbing.7.0.0.nupkg.sha512",
     "C:\\Users\\marcos\\.nuget\\packages\\microsoft.extensions.hosting\\7.0.0\\microsoft.extensions.hosting.7.0.0.nupkg.sha512",
     "C:\\Users\\marcos\\.nuget\\packages\\microsoft.extensions.hosting.abstractions\\7.0.0\\microsoft.extensions.hosting.abstractions.7.0.0.nupkg.sha512",
+    "C:\\Users\\marcos\\.nuget\\packages\\microsoft.extensions.localization.abstractions\\7.0.3\\microsoft.extensions.localization.abstractions.7.0.3.nupkg.sha512",
     "C:\\Users\\marcos\\.nuget\\packages\\microsoft.extensions.logging\\7.0.0\\microsoft.extensions.logging.7.0.0.nupkg.sha512",
     "C:\\Users\\marcos\\.nuget\\packages\\microsoft.extensions.logging.abstractions\\7.0.1\\microsoft.extensions.logging.abstractions.7.0.1.nupkg.sha512",
     "C:\\Users\\marcos\\.nuget\\packages\\microsoft.extensions.logging.configuration\\7.0.0\\microsoft.extensions.logging.configuration.7.0.0.nupkg.sha512",

@@ -12,13 +12,13 @@ public partial class VipManager
     if (@event.Userid.IsValid && !@event.Bot && !@event.Userid.IsBot)
     {
 
-      if (!string.IsNullOrEmpty(Config.WelcomeMessage.WelcomePrivate))
+      if (Config.ShowWelcomeMessageConnectedPrivate)
       {
-        @event.Userid.PrintToChat(ParseConfigMessage(Config.WelcomeMessage.WelcomePrivate, @event.Userid));
+        @event.Userid.PrintToChat(Localizer["WelComeMessage.ConnectPrivate", @event.Userid.PlayerName]);
       }
-      if (!string.IsNullOrEmpty(Config.WelcomeMessage.WelcomePublic))
+      if (Config.ShowWelcomeMessageConnectedPublic)
       {
-        Server.PrintToChatAll(ParseConfigMessage(Config.WelcomeMessage.WelcomePublic, @event.Userid));
+        Server.PrintToChatAll(Localizer["WelComeMessage.ConnectPublic", @event.Userid.PlayerName]);
       }
     }
 
@@ -28,9 +28,9 @@ public partial class VipManager
   {
     if (!@event.Userid.IsBot)
     {
-      if (!string.IsNullOrEmpty(Config.WelcomeMessage.DisconnectPublic))
+      if (Config.ShowWelcomeMessageDisconnectedPublic)
       {
-        Server.PrintToChatAll(ParseConfigMessage(Config.WelcomeMessage.DisconnectPublic, @event.Userid));
+        Server.PrintToChatAll(Localizer["WelComeMessage.DisconnectedPublic", @event.Userid.PlayerName]);
       }
     }
     return HookResult.Continue;
@@ -40,11 +40,11 @@ public partial class VipManager
     TestDatabaseConnection();
     GetAdminsFromDatabase();
   }
-  private void OnClientPutInServer(int playerSlot)
+  private void OnClientAuthorized(int playerSlot, SteamID steamId)
   {
+    CCSPlayerController? player = Utilities.GetPlayerFromSlot(playerSlot);
 
-    CCSPlayerController player = new(NativeAPI.GetEntityFromIndex((int)(uint)playerSlot + 1));
-    var steamId = new SteamID(player.SteamID);
+    if (player == null || !player.IsValid || player.IsBot) return;
 
     var findPlayerAdmins = PlayerAdmins.FindAll(obj => obj.SteamId == steamId.SteamId64.ToString());
 

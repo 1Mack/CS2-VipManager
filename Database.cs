@@ -1,6 +1,7 @@
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Admin;
+using CounterStrikeSharp.API.Modules.Utils;
 using Dapper;
 using MySqlConnector;
 
@@ -31,12 +32,12 @@ public partial class VipManager
 
       if (connection.State != System.Data.ConnectionState.Open)
       {
-        throw new Exception($"{Config.Prefix} Unable connect to database!");
+        throw new Exception($"{Localizer["Prefix"]} Unable connect to database!");
       }
     }
     catch (Exception ex)
     {
-      throw new Exception($"{Config.Prefix} Unknown mysql exception! " + ex.Message);
+      throw new Exception($"{Localizer["Prefix"]} Unknown mysql exception! " + ex.Message);
     }
     CheckDatabaseTables();
   }
@@ -73,12 +74,12 @@ public partial class VipManager
       {
         await transaction.RollbackAsync();
         await connection.CloseAsync();
-        throw new Exception($"{Config.Prefix} Unable to create tables!");
+        throw new Exception($"{Localizer["Prefix"]} Unable to create tables!");
       }
     }
     catch (Exception ex)
     {
-      throw new Exception($"{Config.Prefix} Unknown mysql exception! " + ex.Message);
+      throw new Exception($"{Localizer["Prefix"]} Unknown mysql exception! " + ex.Message);
     }
   }
 
@@ -102,43 +103,42 @@ public partial class VipManager
       await connection.CloseAsync();
 
       PlayerAdmins.Clear();
-
-      Server.NextFrame(() =>
+      if (queryResult != null)
       {
 
-        if (queryResult != null)
+        Server.NextFrame(() =>
         {
+
           List<dynamic> queryResultList = queryResult.ToList();
 
           foreach (var result in queryResult.ToList())
           {
 
-            if (result.group.Length == 0) Console.WriteLine($"{Config.Prefix} there is a wrong value at  {result.steamid} - {result.group}");
+            if (result.group.Length == 0) Console.WriteLine($"{Localizer["Prefix"]} there is a wrong value at  {result.steamid} - {result.group}");
 
             PlayerAdminsClass playerAdminFormat = new() { SteamId = result.steamid, Group = result.group, EndAt = $"{ParseDateTime($"{result.end_at}")}", CreatedAt = $"{ParseDateTime($"{result.created_at}")}" };
             PlayerAdmins.Add(playerAdminFormat);
           }
-        }
 
-        for (int i = 1; i <= Server.MaxPlayers; i++)
-        {
-          CCSPlayerController playerFromIndex = Utilities.GetPlayerFromIndex(i);
-          if (playerFromIndex != null && playerFromIndex.IsValid && playerFromIndex.UserId != -1)
+          foreach (var player in Utilities.GetPlayers())
           {
-            var findPlayerAdmin = PlayerAdmins.FindAll(obj => obj.SteamId == playerFromIndex.SteamID.ToString());
-            if (findPlayerAdmin != null)
+            if (player != null && player.IsValid && !player.IsBot)
             {
-              AdminManager.AddPlayerToGroup(playerFromIndex, findPlayerAdmin.Select(obj => $"#css/{obj.Group}").ToArray());
+              var findPlayerAdmin = PlayerAdmins.FindAll(obj => obj.SteamId == player.SteamID.ToString());
+              if (findPlayerAdmin != null)
+              {
+                AdminManager.AddPlayerToGroup(player, findPlayerAdmin.Select(obj => $"#css/{obj.Group}").ToArray());
+              }
             }
-          }
-        }
-      });
+          };
+        });
+      }
 
     }
     catch (Exception e)
     {
       Console.WriteLine(e);
-      Server.PrintToConsole($"{Config.Prefix} Erro on loading admins" + e);
+      Server.PrintToConsole($"{Localizer["Prefix"]} Erro on loading admins" + e);
     }
 
   }

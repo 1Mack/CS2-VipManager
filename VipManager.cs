@@ -9,7 +9,7 @@ public class PlayerAdminsClass
   public required string Group { get; set; }
   public required string CreatedAt { get; set; }
   public required string EndAt { get; set; }
-  // Outras propriedades e métodos...
+
 }
 public partial class VipManager : BasePlugin, IPluginConfig<VipManagerConfig>
 {
@@ -21,14 +21,14 @@ public partial class VipManager : BasePlugin, IPluginConfig<VipManagerConfig>
 
   private string DatabaseConnectionString = string.Empty;
 
-  private List<PlayerAdminsClass> PlayerAdmins = new();
+  private readonly List<PlayerAdminsClass> PlayerAdmins = new();
 
   private DateTime reloadCommandCooldown = new();
   private DateTime[] commandCooldown = new DateTime[Server.MaxPlayers];
   public override void Load(bool hotReload)
   {
-
-    RegisterListener<Listeners.OnClientPutInServer>(OnClientPutInServer);
+    //Console.WriteLine(Path.GetFullPath(Path.Combine(ModulePath, "../../../configs/admin_groups.json")));
+    RegisterListener<Listeners.OnClientAuthorized>(OnClientAuthorized);
     RegisterListener<Listeners.OnMapStart>(OnMapStart);
 
     RegisterEventHandler<EventPlayerConnect>(OnPlayerConnect);
