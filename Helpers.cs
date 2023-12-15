@@ -1,11 +1,8 @@
-using System;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Entities;
-using CounterStrikeSharp.API.Modules.Utils;
-
 namespace VipManager;
 
 public partial class VipManager
@@ -89,7 +86,7 @@ public partial class VipManager
     return playerClass;
   }
 
-  private void ReloadUserPermissions(string steamId64, string group, string type, int? time = null)
+  public void ReloadUserPermissions(string steamId64, string group, string type, int? time = null)
   {
     CCSPlayerController? player = Utilities.GetPlayerFromSteamId(ulong.Parse(steamId64));
 
@@ -114,6 +111,52 @@ public partial class VipManager
 
       AdminManager.RemovePlayerFromGroup(player, true, $"#css/{group}");
     }
+  }
+  public void HandleGroupsFile()
+  {
+    string path = Path.GetFullPath(Path.Combine(ModulePath, "../admin_groups.json"));
+
+    GroupsName.Clear();
+
+    Task.Run(async () =>
+    {
+      var result = await GetGroupsFromDatabase() ?? throw new Exception("Couldn't get groups from database");
+
+      string groupsParsed = "";
+      List<dynamic> resultList = result.ToList();
+      for (int i = 0; i < result.Count; i++)
+      {
+        GroupsName.Add(result[i].name);
+
+        string[] flags = resultList[i].flags.Split(",");
+
+        string flagsFormat = string.Join("", flags.Select(flag => $@"""@css/{flag}"",{"\n"}      "));
+
+        groupsParsed += $@"
+  ""#css/{resultList[i].name}"": {{
+    ""flags"": [
+      {flagsFormat.Remove(flagsFormat.LastIndexOf(","))}
+    ],
+    ""immunity"": {resultList[i].immunity}
+  }}";
+        if (i != result.Count - 1)
+        {
+          groupsParsed += ",";
+        }
+      }
+
+
+      await File.WriteAllTextAsync(path, "{" + groupsParsed + "\n}");
+
+      AdminManager.LoadAdminGroups(path);
+
+      if (Config.Groups.OverwriteMainFile)
+      {
+
+        await File.WriteAllTextAsync(Path.GetFullPath(Path.Combine(ModulePath, "../../../configs/admin_groups.json")), "{" + groupsParsed + "\n}");
+      }
+
+    });
   }
 }
 

@@ -23,7 +23,13 @@ public partial class VipManager
 
     if (targetPlayer == null) return;
 
-    args[1] = args[1].Replace("#css/", "");
+    if (Config.Groups.Enabled && GroupsName.Find(g => g.ToLower() == args[1].ToLower()) == null)
+    {
+      command.ReplyToCommand($"{Localizer["Prefix"]} {Localizer["MissingGroup", args[1]]}");
+      return;
+    }
+
+    args[1] = args[1].Replace("#css/", "").ToLower();
 
     Task.Run(async () =>
     {

@@ -50,6 +50,8 @@ public class VipManagerConfig : BasePluginConfig
   public VipTest VipTest { get; set; } = new();
   [JsonPropertyName("Commands")]
   public Commands Commands { get; set; } = new();
+  [JsonPropertyName("Groups")]
+  public Groups Groups { get; set; } = new();
 }
 public class Database
 {
@@ -67,6 +69,8 @@ public class Database
   public string PrefixVipManager { get; set; } = "vip_manager";
   [JsonPropertyName("PrefixTestVip")]
   public string PrefixTestVip { get; set; } = "vip_manager_testvip";
+  [JsonPropertyName("PrefixGroups")]
+  public string PrefixGroups { get; set; } = "vip_manager_groups";
 }
 public class VipTest
 {
@@ -99,4 +103,11 @@ public class Commands
   public string StatusPrefix { get; set; } = "vm_status";
   [JsonPropertyName("StatusPermission")]
   public string StatusPermission { get; set; } = "@css/reservation";
+}
+public class Groups
+{
+  [JsonPropertyName("Enabled")]
+  public bool Enabled { get; set; } = true;
+  [JsonPropertyName("OverwriteMainFile")]
+  public bool OverwriteMainFile { get; set; } = false;
 }

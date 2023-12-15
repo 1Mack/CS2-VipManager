@@ -39,6 +39,7 @@ public partial class VipManager
   {
     TestDatabaseConnection();
     GetAdminsFromDatabase();
+    if (Config.Groups.Enabled) HandleGroupsFile();
   }
   private void OnClientAuthorized(int playerSlot, SteamID steamId)
   {

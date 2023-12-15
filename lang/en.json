@@ -22,5 +22,6 @@
   "RolesMenu": "Your Admin Roles",
   "WelComeMessage.ConnectPrivate": "Welcome to the server {0}, thanks for supporting the server being VIP",
   "WelComeMessage.ConnectPublic": "VIP player {olive}{0} {green}connected",
-  "WelComeMessage.DisconnectedPublic": "VIP player {olive}{0} {red}disconnect"
+  "WelComeMessage.DisconnectedPublic": "VIP player {olive}{0} {red}disconnect",
+  "MissingGroup": "There are no roles named {red}{0}"
 }

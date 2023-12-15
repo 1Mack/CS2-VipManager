@@ -63,9 +63,15 @@ public partial class VipManager
         `created_at` INT NOT NULL, end_at INT NOT NULL, PRIMARY KEY (`id`)) 
         ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci";
 
+        string createTable3 = @$"CREATE TABLE IF NOT EXISTS `{Config.Database.PrefixGroups}` 
+        (`id` INT NOT NULL AUTO_INCREMENT, `name` varchar(30) UNIQUE, `flags` text NOT NULL, 
+        immunity INT NOT NULL, PRIMARY KEY (`id`)) 
+        ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci";
 
         await connection.ExecuteAsync(createTable1, transaction: transaction);
         await connection.ExecuteAsync(createTable2, transaction: transaction);
+        await connection.ExecuteAsync(createTable3, transaction: transaction);
+
 
         await transaction.CommitAsync();
         await connection.CloseAsync();
@@ -139,6 +145,31 @@ public partial class VipManager
     {
       Console.WriteLine(e);
       Server.PrintToConsole($"{Localizer["Prefix"]} Erro on loading admins" + e);
+    }
+
+  }
+  async public Task<List<dynamic>?> GetGroupsFromDatabase()
+  {
+    try
+    {
+      using var connection = new MySqlConnection(DatabaseConnectionString);
+
+      await connection.OpenAsync();
+
+      var endAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000;
+
+      string query = $"SELECT * FROM {Config.Database.PrefixGroups}";
+
+      var queryResult = await connection.QueryAsync(query);
+      await connection.CloseAsync();
+
+      return queryResult?.ToList();
+
+    }
+    catch (Exception e)
+    {
+      Console.WriteLine(e);
+      return null;
     }
 
   }

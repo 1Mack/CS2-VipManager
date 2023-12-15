@@ -12,6 +12,7 @@
     <PackageReference Include="MySqlConnector" Version="*" />
 
      <None Update="lang\**\*.*" CopyToOutputDirectory="PreserveNewest" />
+
   </ItemGroup>
 
 </Project>

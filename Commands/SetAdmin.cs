@@ -25,6 +25,14 @@ public partial class VipManager
 
     if (targetPlayer == null) return;
 
+    if (Config.Groups.Enabled && GroupsName.Find(g => g.ToLower() == args[1].ToLower()) == null)
+    {
+      command.ReplyToCommand($"{Localizer["Prefix"]} {Localizer["MissingGroup", args[1]]}");
+      return;
+    }
+
+    args[1] = args[1].Replace("#css/", "").ToLower();
+
     try
     {
       Task.Run(async () =>
@@ -35,7 +43,6 @@ public partial class VipManager
 
         string query = "SELECT id FROM vip_manager WHERE steamid = @steamid AND `group` = @group";
 
-        args[1] = args[1].Replace("#css/", "").ToLower();
 
         IEnumerable<dynamic> result = await connection.QueryAsync(query, new { steamid = targetPlayer.Steamid, group = args[1] });
 

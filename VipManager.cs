@@ -22,12 +22,13 @@ public partial class VipManager : BasePlugin, IPluginConfig<VipManagerConfig>
   private string DatabaseConnectionString = string.Empty;
 
   private readonly List<PlayerAdminsClass> PlayerAdmins = new();
+  private readonly List<string> GroupsName = new();
 
   private DateTime reloadCommandCooldown = new();
   private DateTime[] commandCooldown = new DateTime[Server.MaxPlayers];
   public override void Load(bool hotReload)
   {
-    //Console.WriteLine(Path.GetFullPath(Path.Combine(ModulePath, "../../../configs/admin_groups.json")));
+
     RegisterListener<Listeners.OnClientAuthorized>(OnClientAuthorized);
     RegisterListener<Listeners.OnMapStart>(OnMapStart);
 
@@ -44,6 +45,8 @@ public partial class VipManager : BasePlugin, IPluginConfig<VipManagerConfig>
 
     BuildDatabaseConnectionString();
     TestDatabaseConnection();
+
+    if (Config.Groups.Enabled) HandleGroupsFile();
   }
 
 

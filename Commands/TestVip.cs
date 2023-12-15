@@ -32,6 +32,12 @@ public partial class VipManager
         return;
       }
 
+      if (Config.Groups.Enabled && GroupsName.Find(g => g.ToLower() == Config.VipTest.Group.ToLower()) == null)
+      {
+        command.ReplyToCommand($"{Localizer["Prefix"]} {Localizer["MissingGroup", Config.VipTest.Group]}");
+        return;
+      }
+
       string steamid = player.SteamID.ToString();
       string name = player.PlayerName;
 

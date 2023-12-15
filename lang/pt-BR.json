@@ -22,5 +22,6 @@
   "RolesMenu": "Seus Cargos",
   "WelComeMessage.ConnectPrivate": "Bem vindo ao servidor {green}{0}{default}, agradecemos por ajudar a manter o servidor sendo {GOLD}VIP",
   "WelComeMessage.ConnectPublic": "Jogador {GOLD}VIP {olive}{0} {green}entrou",
-  "WelComeMessage.DisconnectedPublic": "Jogador {GOLD}VIP {olive}{0} {red}saiu"
+  "WelComeMessage.DisconnectedPublic": "Jogador {GOLD}VIP {olive}{0} {red}saiu",
+  "MissingGroup": "Não existe nenhum cargo com o nome {red}{0}"
 }
