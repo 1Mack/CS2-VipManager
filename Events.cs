@@ -53,6 +53,13 @@ public partial class VipManager
     {
       AdminManager.AddPlayerToGroup(steamId, findPlayerAdmins.Select(obj => $"#css/{obj.Group}").ToArray());
     }
-
+  }
+  private void OnClientDisconnect(int playerSlot)
+  {
+    commandCooldown.Remove(playerSlot);
+  }
+  private void OnClientPutInServer(int playerSlot)
+  {
+    commandCooldown.Add(playerSlot, DateTime.UtcNow);
   }
 }

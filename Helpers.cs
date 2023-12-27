@@ -158,5 +158,25 @@ public partial class VipManager
 
     });
   }
+  public bool CanExecuteCommand(int playerSlot)
+  {
+    if (commandCooldown.ContainsKey(playerSlot))
+    {
+      if (DateTime.UtcNow >= commandCooldown[playerSlot])
+      {
+        commandCooldown[playerSlot] = commandCooldown[playerSlot].AddSeconds(Config.CooldownRefreshCommandSeconds);
+        return true;
+      }
+      else
+      {
+        return false;
+      }
+    }
+    else
+    {
+      commandCooldown.Add(playerSlot, DateTime.UtcNow.AddSeconds(Config.CooldownRefreshCommandSeconds));
+      return true;
+    }
+  }
 }
 

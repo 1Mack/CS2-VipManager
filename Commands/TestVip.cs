@@ -20,12 +20,8 @@ public partial class VipManager
       return;
     }
 
-    int playerIndex = (int)player.Index;
-
-    if (commandCooldown != null && DateTime.UtcNow >= commandCooldown[playerIndex].AddSeconds(Config.CooldownRefreshCommandSeconds))
+    if (CanExecuteCommand(player.Slot))
     {
-      commandCooldown[playerIndex] = DateTime.UtcNow;
-
       if (Config.VipTest.Time == 0 || Config.VipTest.Group.Length == 0)
       {
         command.ReplyToCommand($"{Localizer["Prefix"]} {Localizer["CommandBlocked"]}!");

@@ -1,5 +1,6 @@
 ﻿using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API;
+using static CounterStrikeSharp.API.Core.Listeners;
 
 namespace VipManager;
 
@@ -23,14 +24,14 @@ public partial class VipManager : BasePlugin, IPluginConfig<VipManagerConfig>
 
   private readonly List<PlayerAdminsClass> PlayerAdmins = new();
   private readonly List<string> GroupsName = new();
-
-  private DateTime reloadCommandCooldown = new();
-  private DateTime[] commandCooldown = new DateTime[Server.MaxPlayers];
+  private readonly Dictionary<int, DateTime> commandCooldown = new();
   public override void Load(bool hotReload)
   {
 
-    RegisterListener<Listeners.OnClientAuthorized>(OnClientAuthorized);
-    RegisterListener<Listeners.OnMapStart>(OnMapStart);
+    RegisterListener<OnClientAuthorized>(OnClientAuthorized);
+    RegisterListener<OnMapStart>(OnMapStart);
+    RegisterListener<OnClientDisconnect>(OnClientDisconnect);
+    RegisterListener<OnClientPutInServer>(OnClientPutInServer);
 
     RegisterEventHandler<EventPlayerConnect>(OnPlayerConnect);
     RegisterEventHandler<EventPlayerDisconnect>(OnPlayerDisconnect);

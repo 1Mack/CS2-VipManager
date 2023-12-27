@@ -20,12 +20,8 @@ public partial class VipManager
     }
     if (player == null || !player.IsValid) return;
 
-    int playerIndex = (int)player.Index;
-
-    if (commandCooldown != null && DateTime.UtcNow >= commandCooldown[playerIndex].AddSeconds(Config.CooldownRefreshCommandSeconds))
+    if (CanExecuteCommand(player.Slot))
     {
-      commandCooldown[playerIndex] = DateTime.UtcNow;
-
       var findPlayerAdmins = PlayerAdmins.FindAll(obj => obj.SteamId == player.SteamID.ToString());
 
       if (findPlayerAdmins == null)

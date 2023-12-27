@@ -19,6 +19,13 @@ public partial class VipManager
 
       return;
     }
+
+    if (player != null && !CanExecuteCommand(player.Slot))
+    {
+      command.ReplyToCommand($"{Localizer["Prefix"]} {Localizer["CoolDown", Config.CooldownRefreshCommandSeconds]}");
+      return;
+    }
+
     string[] args = command.ArgString.Split(" ");
 
     GetPlayerClass? targetPlayer = GetPlayer(args[0], command);

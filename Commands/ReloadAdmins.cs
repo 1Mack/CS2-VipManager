@@ -13,18 +13,15 @@ public partial class VipManager
       command.ReplyToCommand($"{Localizer["Prefix"]} {Localizer["MissingCommandPermission"]}");
       return;
     }
-    if (DateTime.UtcNow >= reloadCommandCooldown.AddSeconds(Config.CooldownRefreshCommandSeconds))
+    if (player != null && !CanExecuteCommand(player.Slot))
     {
-
-      GetAdminsFromDatabase();
-      reloadCommandCooldown = DateTime.UtcNow;
-
-      command.ReplyToCommand($"{Localizer["Prefix"]} {Localizer["AdminReloadSuccess"]}");
-
+      command.ReplyToCommand($"{Localizer["Prefix"]} {Localizer["CoolDown", Config.CooldownRefreshCommandSeconds]}");
       return;
+
     }
 
-    command.ReplyToCommand($"{Localizer["Prefix"]} {Localizer["CoolDown", Config.CooldownRefreshCommandSeconds]}");
+    GetAdminsFromDatabase();
 
+    command.ReplyToCommand($"{Localizer["Prefix"]} {Localizer["AdminReloadSuccess"]}");
   }
 }
