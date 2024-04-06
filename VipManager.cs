@@ -15,7 +15,7 @@ public partial class VipManager : BasePlugin, IPluginConfig<VipManagerConfig>
   public override string ModuleName => "VipManager";
   public override string ModuleDescription => "Manage players permissions and groups using database";
   public override string ModuleAuthor => "1MaaaaaacK";
-  public override string ModuleVersion => "1.5";
+  public override string ModuleVersion => "1.6";
   public static int ConfigVersion => 7;
   private readonly List<PlayerAdminsClass> PlayerAdmins = new();
   private readonly List<string> GroupsName = new();
