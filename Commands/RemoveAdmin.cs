@@ -2,16 +2,19 @@ using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Commands;
-using Dapper;
-using MySqlConnector;
+using CounterStrikeSharp.API.Modules.Menu;
+using Microsoft.Extensions.Logging;
 
 namespace VipManager;
 
 public partial class VipManager
 {
-  [CommandHelper(minArgs: 2, usage: "[steamid64] [group]", whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
+  [CommandHelper(minArgs: 1, usage: "[steamid64]", whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
   public void RemoveAdmin(CCSPlayerController? player, CommandInfo command)
   {
+
+    if (player == null || !player.IsValid || player.IsBot) return;
+
     if (!string.IsNullOrEmpty(Config.Commands.RemovePermission) && !AdminManager.PlayerHasPermissions(player, Config.Commands.RemovePermission.Split(";")))
     {
       command.ReplyToCommand($"{Localizer["Prefix"]} {Localizer["MissingCommandPermission"]}");
@@ -38,51 +41,52 @@ public partial class VipManager
 
     args[1] = args[1].Replace("#css/", "").ToLower();
 
-    Task.Run(async () =>
+    string query = "";
+
+    try
     {
+      Task<List<AdminsDatabaseClass>> task1 = Task.Run(async () =>
+       {
+         query = $"SELECT * FROM {Config.Database.PrefixVipManager} WHERE steamid = @steamid AND `group` = @group";
 
+         return await QueryAsync<AdminsDatabaseClass>(query, new { steamid = targetPlayer.Steamid, group = args[1] });
+       });
+      task1.Wait();
 
-      try
+      if (task1.Result.Count > 0)
       {
-        using var connection = new MySqlConnection(DatabaseConnectionString);
-        await connection.OpenAsync();
+        command.ReplyToCommand($"{Localizer["Prefix"]} {Localizer["NoAdminWithSteamidAndGroup"]}");
+        return;
+      }
 
-        string query = $"SELECT id FROM `{Config.Database.PrefixVipManager}` WHERE steamid = @steamid AND `group` = @group";
-
-        IEnumerable<dynamic> result = await connection.QueryAsync(query, new { steamid = targetPlayer.Steamid, group = args[1] });
+      Menu(Localizer["Menu.SelectAdminsRemove"], player, handleMenu, task1.Result.Select(obj => $"{obj.server_id}+{obj.group}+").ToList());
 
 
-        if (result == null || result.AsList().Count == 0)
-        {
-          Server.NextFrame(() =>
-          {
-            command.ReplyToCommand($"{Localizer["Prefix"]} {Localizer["NoAdminWithSteamidAndGroup"]}");
-          });
-          return;
-        }
+      void handleMenu(CCSPlayerController player, ChatMenuOption option)
+      {
+        query = $"DELETE FROM `{Config.Database.PrefixVipManager}` WHERE steamid = @steamid AND `group` = @group AND server_id = @serverID";
 
-        query = $"DELETE FROM `{Config.Database.PrefixVipManager}` WHERE steamid = @steamid AND `group` = @group";
+        string[] infos = option.Text.Split("+");
 
-        await connection.ExecuteAsync(query, new { steamid = targetPlayer.Steamid, group = args[1] });
+        Task task2 = Task.Run(() => ExecuteAsync(query, new { steamid = targetPlayer.Steamid, group = infos[1], serverID = infos[0] }));
+
+        task2.Wait();
 
         ReloadUserPermissions(targetPlayer.Steamid, args[1], "remove");
 
-        Server.NextFrame(() =>
-        {
-          command.ReplyToCommand($"{Localizer["Prefix"]} {Localizer["AdminDeleteSuccess"]}");
-        });
+        command.ReplyToCommand($"{Localizer["Prefix"]} {Localizer["AdminDeleteSuccess"]}");
 
-        await connection.CloseAsync();
       }
-      catch (Exception e)
+
+    }
+    catch (Exception e)
+    {
+      Logger.LogError($"{Localizer["Prefix"]} {Localizer["InternalError"]} " + e.Message);
+      Server.NextFrame(() =>
       {
-        Console.WriteLine(e);
-        Server.NextFrame(() =>
-        {
-          command.ReplyToCommand($"{Localizer["Prefix"]} {Localizer["InternalError"]}");
-        });
-        return;
-      }
-    });
+        command.ReplyToCommand($"{Localizer["Prefix"]} {Localizer["InternalError"]}");
+      });
+      return;
+    }
   }
 }

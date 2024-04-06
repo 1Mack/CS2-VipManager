@@ -1,7 +1,3 @@
-using CounterStrikeSharp.API;
-using CounterStrikeSharp.API.Core;
-using CounterStrikeSharp.API.Modules.Admin;
-using CounterStrikeSharp.API.Modules.Utils;
 using Dapper;
 using MySqlConnector;
 
@@ -9,6 +5,8 @@ namespace VipManager;
 
 public partial class VipManager
 {
+  private string _databaseConnectionString = string.Empty;
+
   private void BuildDatabaseConnectionString()
   {
     var builder = new MySqlConnectionStringBuilder
@@ -20,157 +18,44 @@ public partial class VipManager
       Port = (uint)Config.Database.Port,
     };
 
-    DatabaseConnectionString = builder.ConnectionString;
+    _databaseConnectionString = builder.ConnectionString;
   }
-
-  private void TestDatabaseConnection()
+  public async Task<List<T>> QueryAsync<T>(string query, object? parameters = null)
   {
     try
     {
-      using var connection = new MySqlConnection(DatabaseConnectionString);
-      connection.Open();
+      using MySqlConnection connection = new(_databaseConnectionString);
 
-      if (connection.State != System.Data.ConnectionState.Open)
-      {
-        throw new Exception($"{Localizer["Prefix"]} Unable connect to database!");
-      }
+      await connection.OpenAsync();
+
+      var queryResult = await connection.QueryAsync<T>(query, parameters);
+
+      await connection.CloseAsync();
+
+      return queryResult.ToList();
     }
     catch (Exception ex)
     {
-      throw new Exception($"{Localizer["Prefix"]} Unknown mysql exception! " + ex.Message);
+      throw new Exception(ex.Message);
     }
-    CheckDatabaseTables();
   }
-
-  async private void CheckDatabaseTables()
+  public async Task ExecuteAsync(string query, object? parameters = null)
   {
+
     try
     {
-      using var connection = new MySqlConnection(DatabaseConnectionString);
+      using MySqlConnection connection = new(_databaseConnectionString);
+
       await connection.OpenAsync();
 
-      using var transaction = await connection.BeginTransactionAsync();
+      var queryResult = await connection.ExecuteAsync(query, parameters);
 
-      try
-      {
-        string createTable1 = @$"CREATE TABLE IF NOT EXISTS `{Config.Database.PrefixVipManager}` 
-        (`id` INT NOT NULL AUTO_INCREMENT, `name` varchar(128), `steamid` varchar(64) NOT NULL, `group` varchar(200) NOT NULL,
-         `discord_id` varchar(100), `created_at` INT NOT NULL, end_at INT NOT NULL, PRIMARY KEY (`id`)) 
-         ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci";
-
-        string createTable2 = @$"CREATE TABLE IF NOT EXISTS `{Config.Database.PrefixTestVip}` 
-        (`id` INT NOT NULL AUTO_INCREMENT, `name` varchar(128), `steamid` varchar(64) NOT NULL, 
-        `created_at` INT NOT NULL, end_at INT NOT NULL, PRIMARY KEY (`id`)) 
-        ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci";
-
-        string createTable3 = @$"CREATE TABLE IF NOT EXISTS `{Config.Database.PrefixGroups}` 
-        (`id` INT NOT NULL AUTO_INCREMENT, `name` varchar(30) UNIQUE, `flags` text NOT NULL, 
-        immunity INT NOT NULL, PRIMARY KEY (`id`)) 
-        ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci";
-
-        await connection.ExecuteAsync(createTable1, transaction: transaction);
-        await connection.ExecuteAsync(createTable2, transaction: transaction);
-        await connection.ExecuteAsync(createTable3, transaction: transaction);
-
-
-        await transaction.CommitAsync();
-        await connection.CloseAsync();
-      }
-      catch (Exception)
-      {
-        await transaction.RollbackAsync();
-        await connection.CloseAsync();
-        throw new Exception($"{Localizer["Prefix"]} Unable to create tables!");
-      }
+      await connection.CloseAsync();
     }
     catch (Exception ex)
     {
-      throw new Exception($"{Localizer["Prefix"]} Unknown mysql exception! " + ex.Message);
+      throw new Exception(ex.Message);
     }
   }
 
-  async private void GetAdminsFromDatabase()
-  {
-    try
-    {
-      using var connection = new MySqlConnection(DatabaseConnectionString);
-
-      await connection.OpenAsync();
-
-      var endAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000;
-
-      string query = $"DELETE FROM `{Config.Database.PrefixVipManager}` WHERE end_at <= @endAt AND end_at != 0";
-
-      await connection.ExecuteAsync(query, new { endAt });
-
-      query = $"select * from `{Config.Database.PrefixVipManager}` order by steamid ";
-
-      var queryResult = await connection.QueryAsync(query);
-      await connection.CloseAsync();
-
-      PlayerAdmins.Clear();
-      if (queryResult != null)
-      {
-
-        Server.NextFrame(() =>
-        {
-
-          List<dynamic> queryResultList = queryResult.ToList();
-
-          foreach (var result in queryResult.ToList())
-          {
-
-            if (result.group.Length == 0) Console.WriteLine($"{Localizer["Prefix"]} there is a wrong value at  {result.steamid} - {result.group}");
-
-            PlayerAdminsClass playerAdminFormat = new() { SteamId = result.steamid, Group = result.group, EndAt = $"{ParseDateTime($"{result.end_at}")}", CreatedAt = $"{ParseDateTime($"{result.created_at}")}" };
-            PlayerAdmins.Add(playerAdminFormat);
-          }
-
-          foreach (var player in Utilities.GetPlayers())
-          {
-            if (player != null && player.IsValid && !player.IsBot)
-            {
-              var findPlayerAdmin = PlayerAdmins.FindAll(obj => obj.SteamId == player.SteamID.ToString());
-              if (findPlayerAdmin != null)
-              {
-                AdminManager.AddPlayerToGroup(player, findPlayerAdmin.Select(obj => $"#css/{obj.Group}").ToArray());
-              }
-            }
-          };
-        });
-      }
-
-    }
-    catch (Exception e)
-    {
-      Console.WriteLine(e);
-      Server.PrintToConsole($"{Localizer["Prefix"]} Erro on loading admins" + e);
-    }
-
-  }
-  async public Task<List<dynamic>?> GetGroupsFromDatabase()
-  {
-    try
-    {
-      using var connection = new MySqlConnection(DatabaseConnectionString);
-
-      await connection.OpenAsync();
-
-      var endAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000;
-
-      string query = $"SELECT * FROM {Config.Database.PrefixGroups}";
-
-      var queryResult = await connection.QueryAsync(query);
-      await connection.CloseAsync();
-
-      return queryResult?.ToList();
-
-    }
-    catch (Exception e)
-    {
-      Console.WriteLine(e);
-      return null;
-    }
-
-  }
 }

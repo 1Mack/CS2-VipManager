@@ -1,0 +1,15 @@
+C:\Users\marcos\Documents\mack\csgo\cs2\plugins\VipManager\bin\Release\net8.0\lang\en.json
+C:\Users\marcos\Documents\mack\csgo\cs2\plugins\VipManager\bin\Release\net8.0\lang\pt-BR.json
+C:\Users\marcos\Documents\mack\csgo\cs2\plugins\VipManager\bin\Release\net8.0\VipManager.deps.json
+C:\Users\marcos\Documents\mack\csgo\cs2\plugins\VipManager\bin\Release\net8.0\VipManager.dll
+C:\Users\marcos\Documents\mack\csgo\cs2\plugins\VipManager\bin\Release\net8.0\VipManager.pdb
+C:\Users\marcos\Documents\mack\csgo\cs2\plugins\VipManager\obj\Release\net8.0\VipManager.csproj.AssemblyReference.cache
+C:\Users\marcos\Documents\mack\csgo\cs2\plugins\VipManager\obj\Release\net8.0\VipManager.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\marcos\Documents\mack\csgo\cs2\plugins\VipManager\obj\Release\net8.0\VipManager.AssemblyInfoInputs.cache
+C:\Users\marcos\Documents\mack\csgo\cs2\plugins\VipManager\obj\Release\net8.0\VipManager.AssemblyInfo.cs
+C:\Users\marcos\Documents\mack\csgo\cs2\plugins\VipManager\obj\Release\net8.0\VipManager.csproj.CoreCompileInputs.cache
+C:\Users\marcos\Documents\mack\csgo\cs2\plugins\VipManager\obj\Release\net8.0\VipManager.sourcelink.json
+C:\Users\marcos\Documents\mack\csgo\cs2\plugins\VipManager\obj\Release\net8.0\VipManager.dll
+C:\Users\marcos\Documents\mack\csgo\cs2\plugins\VipManager\obj\Release\net8.0\refint\VipManager.dll
+C:\Users\marcos\Documents\mack\csgo\cs2\plugins\VipManager\obj\Release\net8.0\VipManager.pdb
+C:\Users\marcos\Documents\mack\csgo\cs2\plugins\VipManager\obj\Release\net8.0\ref\VipManager.dll

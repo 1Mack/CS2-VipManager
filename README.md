@@ -10,13 +10,14 @@ Plugin for CS2 that stores admins in mysql and apply permissions on the game
 The config is created automatically. ***(Path: `csgo/addons/counterstrikesharp/configs/plugins/VipManager`)***
 ```
 {
-  "Version": 6,
+  "Version": 7,
   "CooldownRefreshCommandSeconds": 60,
   "DateFormat": "dd/MM/yyyy HH:mm:ss",
   "TimeZone": -3,
   "ShowWelcomeMessageConnectedPublic": true,
   "ShowWelcomeMessageConnectedPrivate": true,
   "ShowWelcomeMessageDisconnectedPublic": true,
+  "ServerID": 1,
   "Database": {
     "Host": "",
     "Port": 3306,
@@ -47,12 +48,12 @@ The config is created automatically. ***(Path: `csgo/addons/counterstrikesharp/c
     "Enabled": true,
     "OverwriteMainFile": true // True = will overwrite admins_group.json located at addons/counterstrikesharp/configs
   },
-  "ConfigVersion": 6
+  "ConfigVersion": 7
 }
 ```
 
 ## Commands
-- **`css_vm_add [steamid64] [group] [time (minutes) | 0 (permanent)]`** - Adds an admin; **(`#css/admin` group is required for use)**
+- **`css_vm_add [steamid64] [group] [time (minutes) | 0 (permanent)] [server_id (default is ServerID || 0 = All)]`** - Adds an admin; **(`#css/admin` group is required for use)**
 - **`css_vm_remove [steamid64] [group]`** - Remove an admin; **(`#css/admin` group is required for use)**
 - **`css_vm_reload`** - Reloads the configuration; **(`#css/admin` group is required for use)**
 - **`css_vm_status`** - Check your admins roles time left; **(`#css/vip` group is required for use)**

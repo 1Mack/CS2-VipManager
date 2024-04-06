@@ -20,7 +20,7 @@ public partial class VipManager
 
     }
 
-    GetAdminsFromDatabase();
+    Task.Run(GetAdminsFromDatabase);
 
     command.ReplyToCommand($"{Localizer["Prefix"]} {Localizer["AdminReloadSuccess"]}");
   }

@@ -35,7 +35,6 @@ C:\Users\marcos\Documents\mack\csgo\cs2\plugins\VipManager\bin\Debug\net7.0\publ
 C:\Users\marcos\Documents\mack\csgo\cs2\plugins\VipManager\bin\Debug\net7.0\publish\Microsoft.Extensions.Options.ConfigurationExtensions.dll
 C:\Users\marcos\Documents\mack\csgo\cs2\plugins\VipManager\bin\Debug\net7.0\publish\Microsoft.Extensions.Primitives.dll
 C:\Users\marcos\Documents\mack\csgo\cs2\plugins\VipManager\bin\Debug\net7.0\publish\MySqlConnector.dll
-C:\Users\marcos\Documents\mack\csgo\cs2\plugins\VipManager\bin\Debug\net7.0\publish\Newtonsoft.Json.dll
 C:\Users\marcos\Documents\mack\csgo\cs2\plugins\VipManager\bin\Debug\net7.0\publish\Scrutor.dll
 C:\Users\marcos\Documents\mack\csgo\cs2\plugins\VipManager\bin\Debug\net7.0\publish\Serilog.dll
 C:\Users\marcos\Documents\mack\csgo\cs2\plugins\VipManager\bin\Debug\net7.0\publish\Serilog.Extensions.Logging.dll

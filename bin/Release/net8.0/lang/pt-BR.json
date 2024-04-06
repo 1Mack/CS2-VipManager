@@ -19,9 +19,10 @@
   "MoreThanOnePlayerWithSameName": "Existe mais de um jogador com esse nome",
   "NoPlayersFound": "Nenhum jogador encontrado com esse nome",
   "PlayerNotAvailable": "Não encontrei nenhum jogador disponível com esse nome",
-  "RolesMenu": "Seus Cargos",
   "WelComeMessage.ConnectPrivate": "Bem vindo ao servidor {green}{0}{default}, agradecemos por ajudar a manter o servidor sendo {GOLD}VIP",
   "WelComeMessage.ConnectPublic": "Jogador {GOLD}VIP {olive}{0} {green}entrou",
   "WelComeMessage.DisconnectedPublic": "Jogador {GOLD}VIP {olive}{0} {red}saiu",
-  "MissingGroup": "Não existe nenhum cargo com o nome {red}{0}"
+  "MissingGroup": "Não existe nenhum cargo com o nome {red}{0}",
+  "Menu.Roles": "Seus Cargos",
+  "Menu.SelectAdminsRemove": "Escolha a opção para remover"
 }

@@ -1,35 +1,32 @@
-﻿using CounterStrikeSharp.API.Core;
-using CounterStrikeSharp.API;
+﻿using CounterStrikeSharp.API;
+using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Core.Attributes;
+using CounterStrikeSharp.API.Modules.Commands;
+using Dapper;
+using Microsoft.Extensions.Logging;
 using static CounterStrikeSharp.API.Core.Listeners;
+
 
 namespace VipManager;
 
-public class PlayerAdminsClass
-{
-  public required string SteamId { get; set; }
-  public required string Group { get; set; }
-  public required string CreatedAt { get; set; }
-  public required string EndAt { get; set; }
-
-}
+[MinimumApiVersion(199)]
 public partial class VipManager : BasePlugin, IPluginConfig<VipManagerConfig>
 {
   public override string ModuleName => "VipManager";
-  public override string ModuleDescription => "Set admin by database";
+  public override string ModuleDescription => "Manage players permissions and groups using database";
   public override string ModuleAuthor => "1MaaaaaacK";
-  public override string ModuleVersion => "1.4";
-  public static int ConfigVersion => 6;
-
-  private string DatabaseConnectionString = string.Empty;
-
+  public override string ModuleVersion => "1.5";
+  public static int ConfigVersion => 7;
   private readonly List<PlayerAdminsClass> PlayerAdmins = new();
   private readonly List<string> GroupsName = new();
   private readonly Dictionary<int, DateTime> commandCooldown = new();
+  private bool isSynced = false;
   public override void Load(bool hotReload)
   {
 
     RegisterListener<OnClientAuthorized>(OnClientAuthorized);
     RegisterListener<OnMapStart>(OnMapStart);
+    RegisterListener<OnMapEnd>(OnMapEnd);
     RegisterListener<OnClientDisconnect>(OnClientDisconnect);
     RegisterListener<OnClientPutInServer>(OnClientPutInServer);
 
@@ -43,13 +40,11 @@ public partial class VipManager : BasePlugin, IPluginConfig<VipManagerConfig>
     AddCommand($"css_{Config.Commands.TestPrefix}", "Test VIP", TesteVip);
     AddCommand($"css_{Config.Commands.StatusPrefix}", "Check your vip time left", StatusVip);
 
-
-    BuildDatabaseConnectionString();
-    TestDatabaseConnection();
-
-    if (Config.Groups.Enabled) HandleGroupsFile();
+    Task.Run(async () =>
+    {
+      await CreateDatabaseTables();
+      if (Config.Groups.Enabled) await HandleGroupsFile();
+      await GetAdminsFromDatabase();
+    });
   }
-
-
-
 }

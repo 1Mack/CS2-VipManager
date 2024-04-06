@@ -1,10 +1,7 @@
-using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Commands;
-using CounterStrikeSharp.API.Modules.Entities;
-using Dapper;
-using MySqlConnector;
+using Microsoft.Extensions.Logging;
 
 namespace VipManager;
 
@@ -37,65 +34,64 @@ public partial class VipManager
       string steamid = player.SteamID.ToString();
       string name = player.PlayerName;
 
-      Task.Run(async () =>
+      try
       {
-        using var connection = new MySqlConnection(DatabaseConnectionString);
-        await connection.OpenAsync();
+        string query = "";
 
-        string query = $"SELECT id FROM `{Config.Database.PrefixTestVip}` WHERE steamid = @steamid";
+        int serverID = Config.VipTest.FollowServerID ? Config.ServerID : 0;
 
+        Task<List<object>> task1 = Task.Run(() =>
+         {
+           query = $"SELECT id FROM `{Config.Database.PrefixTestVip}` WHERE steamid = @steamid AND server_id = @serverID";
+           return QueryAsync<object>(query, new { steamid, serverID });
+         });
+        task1.Wait();
 
-        IEnumerable<dynamic> result = await connection.QueryAsync(query, new { steamid });
-
-        if (result != null && result.AsList().Count > 0)
+        if (task1.Result.Count > 0)
         {
-          Server.NextFrame(() =>
-          {
-            command.ReplyToCommand($"{Localizer["Prefix"]} {Localizer["TestVipAlreadyClaimed"]}");
-          });
+          command.ReplyToCommand($"{Localizer["Prefix"]} {Localizer["TestVipAlreadyClaimed"]}");
           return;
         }
 
-        query = "SELECT id FROM vip_manager WHERE steamid = @steamid and `group` = @group";
 
-        result = await connection.QueryAsync(query, new { steamid, group = Config.VipTest.Group });
+        Task<bool> task2 = Task.Run(() => HasVipGroupOnDatabase(steamid, Config.VipTest.Group, serverID));
 
+        task2.Wait();
 
-        if (result != null && result.AsList().Count > 0)
+        if (task2.Result)
         {
-          Server.NextFrame(() =>
-          {
-            command.ReplyToCommand($"{Localizer["Prefix"]} {Localizer["AlreadyNormalVip"]}");
-          });
-
+          command.ReplyToCommand($"{Localizer["Prefix"]} {Localizer["AlreadyNormalVip"]}");
           return;
         }
 
         var endAt = Config.VipTest.Time == 0 ? 0 : DateTimeOffset.UtcNow.AddMinutes(Config.VipTest.Time).ToUnixTimeMilliseconds() / 1000;
         var createdAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000;
 
-        query = $"INSERT INTO `{Config.Database.PrefixTestVip}` (`name`, `steamid`, `created_at`,`end_at`) VALUES(@name, @steamid, @createdAt, @endAt)";
+        Task task3 = Task.Run(() =>
+        {
+          SetRoleOnVipManagerDatabase(name, steamid, Config.VipTest.Group, serverID, createdAt, endAt);
 
-        await connection.ExecuteAsync(query, new { name, steamid, time = Config.VipTest.Time, createdAt, endAt });
+          query = $"INSERT INTO `{Config.Database.PrefixTestVip}` (`name`, `steamid`, `server_id`, `created_at`,`end_at`) VALUES(@name, @steamid, @serverID, @createdAt, @endAt)";
 
-        query = $"INSERT INTO `{Config.Database.PrefixVipManager}` (`name`, `steamid`, `group`, `created_at`, `end_at`) VALUES(@name, @steamid, @group, @createdAt, @endAt)";
+          _ = ExecuteAsync(query, new { name, steamid, serverID, createdAt, endAt });
 
-        await connection.ExecuteAsync(query, new { name, steamid, group = Config.VipTest.Group, createdAt, endAt });
+        });
+
+        task3.Wait();
+
+        ReloadUserPermissions(steamid, Config.VipTest.Group, "add", Config.VipTest.Time);
+
+        command.ReplyToCommand($"{Localizer["Prefix"]} {Localizer["TestVipActivated", Config.VipTest.Time]}");
+
+      }
+      catch (Exception e)
+      {
+        Logger.LogError($"{Localizer["Prefix"]} {Localizer["InternalError"]} " + e.Message);
+        command.ReplyToCommand($"{Localizer["Prefix"]} {Localizer["InternalError"]}");
+      }
 
 
-        Server.NextFrame(() =>
-         {
-           ReloadUserPermissions(steamid, Config.VipTest.Group, "add", Config.VipTest.Time);
-           command.ReplyToCommand($"{Localizer["Prefix"]} {Localizer["TestVipActivated", Config.VipTest.Time]}");
-         });
-
-        return;
-      });
-
+      command.ReplyToCommand($"{Localizer["Prefix"]} {Localizer["CoolDown", Config.CooldownRefreshCommandSeconds]}");
     }
-
-
-    command.ReplyToCommand($"{Localizer["Prefix"]} {Localizer["CoolDown", Config.CooldownRefreshCommandSeconds]}");
-
   }
 }

@@ -1,5 +1,4 @@
 using CounterStrikeSharp.API.Core;
-using CounterStrikeSharp.API.Modules.Utils;
 using System.Text.Json.Serialization;
 
 namespace VipManager;
@@ -31,7 +30,7 @@ public partial class VipManager
 }
 public class VipManagerConfig : BasePluginConfig
 {
-  public override int Version { get; set; } = 6;
+  public override int Version { get; set; } = 7;
   [JsonPropertyName("CooldownRefreshCommandSeconds")]
   public int CooldownRefreshCommandSeconds { get; set; } = 60;
   [JsonPropertyName("DateFormat")]
@@ -44,6 +43,10 @@ public class VipManagerConfig : BasePluginConfig
   public bool ShowWelcomeMessageConnectedPrivate { get; set; } = true;
   [JsonPropertyName("ShowWelcomeMessageDisconnectedPublic")]
   public bool ShowWelcomeMessageDisconnectedPublic { get; set; } = true;
+  [JsonPropertyName("ServerID")]
+  public int ServerID { get; set; } = 1;
+  [JsonPropertyName("UseCenterHtmlMenu")]
+  public bool UseCenterHtmlMenu { get; set; } = true;
   [JsonPropertyName("Database")]
   public Database Database { get; set; } = new();
   [JsonPropertyName("VipTest")]
@@ -53,6 +56,7 @@ public class VipManagerConfig : BasePluginConfig
   [JsonPropertyName("Groups")]
   public Groups Groups { get; set; } = new();
 }
+
 public class Database
 {
   [JsonPropertyName("Host")]
@@ -74,11 +78,13 @@ public class Database
 }
 public class VipTest
 {
-  [JsonPropertyName("VipTestTime")]
+  [JsonPropertyName("Time")]
   public int Time { get; set; } = 10;
 
-  [JsonPropertyName("VipTestGroup")]
+  [JsonPropertyName("Group")]
   public string Group { get; set; } = "vip";
+  [JsonPropertyName("FollowServerID")]
+  public bool FollowServerID { get; set; } = true;
 }
 public class Commands
 {
