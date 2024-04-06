@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("VipManager")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+823894741dc599d5217cceb2cb72ea0846a84e1f")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+bb24ad103c23896512f47485e4d44c9097b39466")]
 [assembly: System.Reflection.AssemblyProductAttribute("VipManager")]
 [assembly: System.Reflection.AssemblyTitleAttribute("VipManager")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

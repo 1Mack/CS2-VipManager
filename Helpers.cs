@@ -344,10 +344,10 @@ public partial class VipManager
 
       return result.Count > 0;
     }
-    catch (System.Exception)
+    catch (Exception e)
     {
 
-      throw new Exception("Could not");
+      throw new Exception(e.Message);
     }
   }
   public async void SetRoleOnVipManagerDatabase(string name, string steamid, string group, int serverID, long createdAt, long endAt)
@@ -361,9 +361,9 @@ public partial class VipManager
       await ExecuteAsync(query, new { name, steamid, group, serverID, createdAt, endAt });
 
     }
-    catch (System.Exception)
+    catch (Exception e)
     {
-      throw new Exception("Could not");
+      throw new Exception(e.Message);
     }
   }
 }
