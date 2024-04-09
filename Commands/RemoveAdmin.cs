@@ -13,6 +13,13 @@ public partial class VipManager
   public void RemoveAdmin(CCSPlayerController? player, CommandInfo command)
   {
 
+    if (string.IsNullOrEmpty(Config.Commands.RemovePrefix))
+    {
+      command.ReplyToCommand($"{Localizer["Prefix"]} {Localizer["CommandDisabled"]}");
+
+      return;
+    }
+
     if (player == null || !player.IsValid || player.IsBot) return;
 
     if (!string.IsNullOrEmpty(Config.Commands.RemovePermission) && !AdminManager.PlayerHasPermissions(player, Config.Commands.RemovePermission.Split(";")))

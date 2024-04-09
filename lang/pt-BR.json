@@ -24,5 +24,6 @@
   "WelComeMessage.DisconnectedPublic": "Jogador {GOLD}VIP {olive}{0} {red}saiu",
   "MissingGroup": "Não existe nenhum cargo com o nome {red}{0}",
   "Menu.Roles": "Seus Cargos",
-  "Menu.SelectAdminsRemove": "Escolha a opção para remover"
+  "Menu.SelectAdminsRemove": "Escolha a opção para remover",
+  "CommandDisabled": "Esse comando está {red}desabilitado"
 }

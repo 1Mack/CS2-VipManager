@@ -10,7 +10,12 @@ public partial class VipManager
 {
   public void StatusVip(CCSPlayerController? player, CommandInfo command)
   {
-    Server.NextFrame(() => command.ReplyToCommand("opaa"));
+    if (string.IsNullOrEmpty(Config.Commands.StatusPrefix))
+    {
+      command.ReplyToCommand($"{Localizer["Prefix"]} {Localizer["CommandDisabled"]}");
+
+      return;
+    }
 
     if (player == null || !player.IsValid) return;
     if (!string.IsNullOrEmpty(Config.Commands.StatusPermission) && !AdminManager.PlayerHasPermissions(player, Config.Commands.StatusPermission.Split(";")))

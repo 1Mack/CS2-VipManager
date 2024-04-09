@@ -9,6 +9,14 @@ public partial class VipManager
 {
   public void TesteVip(CCSPlayerController? player, CommandInfo command)
   {
+
+    if (string.IsNullOrEmpty(Config.Commands.TestPrefix))
+    {
+      command.ReplyToCommand($"{Localizer["Prefix"]} {Localizer["CommandDisabled"]}");
+
+      return;
+    }
+
     if (player == null || !player.IsValid) return;
 
     if (!string.IsNullOrEmpty(Config.Commands.TestPermission) && !AdminManager.PlayerHasPermissions(player, Config.Commands.TestPermission.Split(";")))

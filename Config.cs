@@ -15,14 +15,6 @@ public partial class VipManager
     {
       throw new Exception($"You need to setup Database credentials in config!");
     }
-    else if (config.Commands.AddPrefix.Length < 1 ||
-    config.Commands.RemovePrefix.Length < 1 ||
-    config.Commands.StatusPrefix.Length < 1 ||
-    config.Commands.ReloadPrefix.Length < 1 ||
-    config.Commands.TestPrefix.Length < 1)
-    {
-      throw new Exception($"You need to setup CommandsPrefix in config!");
-    }
 
     Config = config;
   }

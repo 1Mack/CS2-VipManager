@@ -13,7 +13,12 @@ public partial class VipManager
   [CommandHelper(minArgs: 3, usage: "[steamid64] [group (without #css/)] [time (minutes) or 0 (permanent)] [server_id (default is ServerID. 0 = all)]", whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
   public void SetAdmin(CCSPlayerController? player, CommandInfo command)
   {
+    if (string.IsNullOrEmpty(Config.Commands.AddPrefix))
+    {
+      command.ReplyToCommand($"{Localizer["Prefix"]} {Localizer["CommandDisabled"]}");
 
+      return;
+    }
     if (!string.IsNullOrEmpty(Config.Commands.AddPermission) && !AdminManager.PlayerHasPermissions(player, Config.Commands.AddPermission.Split(";")))
     {
       command.ReplyToCommand($"{Localizer["Prefix"]} {Localizer["MissingCommandPermission"]}");

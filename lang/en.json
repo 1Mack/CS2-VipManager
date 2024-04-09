@@ -24,5 +24,6 @@
   "WelComeMessage.DisconnectedPublic": "VIP player {olive}{0} {red}disconnect",
   "MissingGroup": "There are no roles named {red}{0}",
   "Menu.Roles": "Your Admin Roles",
-  "Menu.SelectAdminsRemove": "Choose the option to remove"
+  "Menu.SelectAdminsRemove": "Choose the option to remove",
+  "CommandDisabled": "This command is {red}disabled"
 }

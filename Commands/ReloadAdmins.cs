@@ -8,6 +8,14 @@ public partial class VipManager
 {
   public void ReloadAdmins(CCSPlayerController? player, CommandInfo command)
   {
+
+    if (string.IsNullOrEmpty(Config.Commands.ReloadPrefix))
+    {
+      command.ReplyToCommand($"{Localizer["Prefix"]} {Localizer["CommandDisabled"]}");
+
+      return;
+    }
+
     if (!string.IsNullOrEmpty(Config.Commands.ReloadPermission) && !AdminManager.PlayerHasPermissions(player, Config.Commands.ReloadPermission.Split(";")))
     {
       command.ReplyToCommand($"{Localizer["Prefix"]} {Localizer["MissingCommandPermission"]}");
