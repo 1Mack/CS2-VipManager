@@ -27,7 +27,7 @@ public partial class VipManager
     if (value.StartsWith("#") && int.TryParse(value.AsSpan(1), out var userid))
     {
       player = Utilities.GetPlayerFromUserid(userid);
-      steamid = player.SteamID.ToString();
+      steamid = player!.SteamID.ToString();
 
     }
     else if (SteamID.TryParse(value, out var steamId))
@@ -313,13 +313,15 @@ public partial class VipManager
   }
 
 
-  public void Menu(string title, CCSPlayerController player, Action<CCSPlayerController, ChatMenuOption> handleMenu, List<string> list)
+  public void Menu(string title, CCSPlayerController player, Action<CCSPlayerController, ChatMenuOption> handleMenu, List<string> list, bool? closeMenu = false)
   {
     if (Config.UseCenterHtmlMenu)
     {
-      CenterHtmlMenu menu = new(title);
+      CenterHtmlMenu menu = new(title, this);
 
       list.ForEach(item => menu.AddMenuOption(item, handleMenu));
+
+      if (closeMenu == true) menu.PostSelectAction = PostSelectAction.Close;
 
       MenuManager.OpenCenterHtmlMenu(this, player, menu);
 
@@ -329,6 +331,8 @@ public partial class VipManager
       ChatMenu menu = new(title);
 
       list.ForEach(item => menu.AddMenuOption(item, handleMenu));
+
+      if (closeMenu == true) menu.PostSelectAction = PostSelectAction.Close;
 
       MenuManager.OpenChatMenu(player, menu);
     }

@@ -39,6 +39,8 @@ public class VipManagerConfig : BasePluginConfig
   public int ServerID { get; set; } = 1;
   [JsonPropertyName("UseCenterHtmlMenu")]
   public bool UseCenterHtmlMenu { get; set; } = true;
+  [JsonPropertyName("CloseMenuAfterUse")]
+  public bool CloseMenuAfterUse { get; set; } = true;
   [JsonPropertyName("Database")]
   public Database Database { get; set; } = new();
   [JsonPropertyName("VipTest")]

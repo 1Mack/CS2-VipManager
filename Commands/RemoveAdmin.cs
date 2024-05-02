@@ -66,7 +66,7 @@ public partial class VipManager
         return;
       }
 
-      Menu(Localizer["Menu.SelectAdminsRemove"], player, handleMenu, task1.Result.Select(obj => $"{obj.server_id}+{obj.group}+").ToList());
+      Menu(Localizer["Menu.SelectAdminsRemove"], player!, handleMenu, task1.Result.Select(obj => $"{obj.server_id}+{obj.group}+").ToList(), Config.CloseMenuAfterUse);
 
 
       void handleMenu(CCSPlayerController player, ChatMenuOption option)

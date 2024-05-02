@@ -10,24 +10,24 @@ public partial class VipManager
 {
   public HookResult OnPlayerConnect(EventPlayerConnect @event, GameEventInfo info)
   {
-    if (@event.Userid.IsValid && !@event.Bot && !@event.Userid.IsBot)
+    if (@event.Userid != null && @event.Userid.IsValid && !@event.Bot && !@event.Userid.IsBot)
     {
-
       if (Config.ShowWelcomeMessageConnectedPrivate)
       {
         @event.Userid.PrintToChat(Localizer["WelComeMessage.ConnectPrivate", @event.Userid.PlayerName]);
       }
-      if (Config.ShowWelcomeMessageConnectedPublic)
+      else if (Config.ShowWelcomeMessageConnectedPublic)
       {
         Server.PrintToChatAll(Localizer["WelComeMessage.ConnectPublic", @event.Userid.PlayerName]);
       }
+
     }
 
     return HookResult.Continue;
   }
   public HookResult OnPlayerDisconnect(EventPlayerDisconnect @event, GameEventInfo info)
   {
-    if (!@event.Userid.IsBot)
+    if (!@event.Userid!.IsBot)
     {
       if (Config.ShowWelcomeMessageDisconnectedPublic)
       {

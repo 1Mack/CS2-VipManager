@@ -44,7 +44,7 @@ public partial class VipManager
         player.PrintToChat(Localizer["Status", getPlayer.Group.ToUpper(), getPlayer.CreatedAt, getPlayer.EndAt]);
       }
 
-      Menu(Localizer["RolesMenu"], player, handleMenu, findPlayerAdmins.Select(obj => obj.Group.ToUpper()).ToList());
+      Menu(Localizer["RolesMenu"], player, handleMenu, findPlayerAdmins.Select(obj => obj.Group.ToUpper()).ToList(), Config.CloseMenuAfterUse);
 
     }
     else

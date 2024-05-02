@@ -1,9 +1,5 @@
-﻿using CounterStrikeSharp.API;
-using CounterStrikeSharp.API.Core;
+﻿using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes;
-using CounterStrikeSharp.API.Modules.Commands;
-using Dapper;
-using Microsoft.Extensions.Logging;
 using static CounterStrikeSharp.API.Core.Listeners;
 
 
@@ -17,9 +13,9 @@ public partial class VipManager : BasePlugin, IPluginConfig<VipManagerConfig>
   public override string ModuleAuthor => "1MaaaaaacK";
   public override string ModuleVersion => "1.6";
   public static int ConfigVersion => 7;
-  private readonly List<PlayerAdminsClass> PlayerAdmins = new();
-  private readonly List<string> GroupsName = new();
-  private readonly Dictionary<int, DateTime> commandCooldown = new();
+  private readonly List<PlayerAdminsClass> PlayerAdmins = [];
+  private readonly List<string> GroupsName = [];
+  private readonly Dictionary<int, DateTime> commandCooldown = [];
   private bool isSynced = false;
   public override void Load(bool hotReload)
   {
