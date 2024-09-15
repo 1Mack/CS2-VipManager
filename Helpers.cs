@@ -84,33 +84,39 @@ public partial class VipManager
     return playerClass;
   }
 
-  public void ReloadUserPermissions(string steamId64, string group, string type, int? time = null)
+  public async void ReloadUserPermissions(ulong steamId64)
   {
-    CCSPlayerController? player = Utilities.GetPlayerFromSteamId(ulong.Parse(steamId64));
-
-    if (type == "add" && time != null)
+    var admin = await GetAdminFromDatabase(steamId64.ToString());
+    if (admin == null)
     {
-      if (PlayerAdmins.Find(obj => obj.SteamId == steamId64 && obj.Group == group) == null)
-      {
-        var endAt = time == 0 ? 0 : DateTimeOffset.UtcNow.AddMinutes((int)time).ToUnixTimeMilliseconds() / 1000;
-        var createdAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000;
-        PlayerAdminsClass playerAdminFormat = new() { SteamId = steamId64, Group = group, CreatedAt = ParseDateTime(createdAt.ToString()), EndAt = ParseDateTime(endAt.ToString()) };
-
-        PlayerAdmins.Add(playerAdminFormat);
-      }
-
-      AdminManager.AddPlayerToGroup(player, PlayerAdmins.FindAll(obj => obj.SteamId == steamId64).Select(obj => $"#css/{obj.Group}").ToArray());
+      PlayerAdmins.Remove(steamId64, out var _);
+      return;
     }
-    else if (type == "remove")
+    Console.WriteLine(admin.Count);
+    List<PlayerAdminsClass> playerAdmins = [];
+    admin.ForEach(adm =>
+     playerAdmins.Add(new PlayerAdminsClass()
+     {
+       Group = adm.group,
+       CreatedAt = adm.created_at.ToString(),
+       EndAt = adm.end_at.ToString()
+     })
+    );
+    foreach (var item in playerAdmins)
     {
-      if (PlayerAdmins.Find(obj => obj.SteamId == steamId64 && obj.Group == group) != null)
-        PlayerAdmins.RemoveAll(obj => obj.SteamId == steamId64 && obj.Group == group);
-
-
-      AdminManager.RemovePlayerFromGroup(player, true, $"#css/{group}");
+      Console.WriteLine(item);
     }
+    PlayerAdmins.AddOrUpdate(steamId64, key => [.. playerAdmins], (key, oldValue) => [.. playerAdmins]);
+
+    Server.NextFrame(() =>
+    {
+      CCSPlayerController? player = Utilities.GetPlayerFromSteamId(steamId64);
+      AdminManager.AddPlayerToGroup(player, playerAdmins.Select(obj => $"#css/{obj.Group}").ToArray());
+    });
+
+
   }
-  public async Task HandleGroupsFile()
+  public async void HandleGroupsFile()
   {
     string path = Path.GetFullPath(Path.Combine(ModulePath, "../admin_groups.json"));
     GroupsName.Clear();
@@ -187,17 +193,26 @@ public partial class VipManager
       return null;
     }
   }
-  async public Task<List<AdminsDatabaseClass>?> GetAdmins(string steamid, string group)
+  async public Task<List<AdminsDatabaseClass>?> GetAdminFromDatabase(string steamid)
   {
     try
     {
-      string query = @$"SELECT * FROM `{Config.Database.PrefixVipManager}` 
-      WHERE {(!string.IsNullOrEmpty(steamid) ? $"steamid = @steamid AND group = @group AND" : "")} 
-      server_id = @server OR server_id = 0  ORDER BY steamid";
 
-      var queryResult = await QueryAsync<AdminsDatabaseClass>(query, new { server = Config.ServerID, steamid, group });
+      var endAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000;
 
-      return queryResult;
+      /*  string query = @$"DELETE FROM `{Config.Database.PrefixVipManager}` 
+       WHERE end_at <= @endAt 
+       AND end_at != 0 
+       AND (server_id = @server OR server_id = 0)";
+
+       await ExecuteAsync(query, new { server = Config.ServerID, endAt }); */
+
+      string query = @$"select * from `{Config.Database.PrefixVipManager}`
+       WHERE ( server_id = @server OR server_id = 0) AND (end_at = 0 AND end_at <= @endAt) order by steamid";
+
+      var queryResult = await QueryAsync<AdminsDatabaseClass>(query, new { server = Config.ServerID, endAt });
+
+      return queryResult.Count > 0 ? queryResult : null;
     }
     catch (Exception e)
     {
@@ -207,71 +222,7 @@ public partial class VipManager
 
   }
 
-  async public Task GetAdminsFromDatabase()
-  {
-    try
-    {
-
-      var endAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000;
-
-      string query = @$"DELETE FROM `{Config.Database.PrefixVipManager}` 
-      WHERE end_at <= @endAt 
-      AND end_at != 0 
-      AND (server_id = @server OR server_id = 0)";
-
-      await ExecuteAsync(query, new { server = Config.ServerID, endAt });
-
-      query = $"select * from `{Config.Database.PrefixVipManager}` WHERE server_id = @server OR server_id = 0 order by steamid";
-
-      var queryResult = await QueryAsync<AdminsDatabaseClass>(query, new { server = Config.ServerID });
-
-      PlayerAdmins.Clear();
-
-      if (queryResult != null)
-      {
-        Server.NextFrame(() =>
-        {
-
-          foreach (var result in queryResult.ToList())
-          {
-
-            if (result.group.Length == 0) Console.WriteLine($"{Localizer["Prefix"]} there is a wrong value at  {result.steamid} - {result.group}");
-
-            PlayerAdminsClass playerAdminFormat = new()
-            {
-              SteamId = result.steamid,
-              Group = result.group,
-              EndAt = $"{ParseDateTime($"{result.end_at}")}",
-              CreatedAt = $"{ParseDateTime($"{result.created_at}")}"
-            };
-
-            PlayerAdmins.Add(playerAdminFormat);
-          }
-
-          foreach (var player in Utilities.GetPlayers())
-          {
-            if (player != null && player.IsValid && !player.IsBot)
-            {
-              var findPlayerAdmin = PlayerAdmins.FindAll(obj => obj.SteamId == player.SteamID.ToString());
-              if (findPlayerAdmin != null)
-              {
-                AdminManager.AddPlayerToGroup(player, findPlayerAdmin.Select(obj => $"#css/{obj.Group}").ToArray());
-              }
-            }
-          };
-          isSynced = true;
-        });
-      }
-
-    }
-    catch (Exception e)
-    {
-      Logger.LogError($"{Localizer["Prefix"]} Erro on loading admins: " + e.Message);
-    }
-
-  }
-
-  public async Task CreateDatabaseTables()
+  public async void CreateDatabaseTables()
   {
     BuildDatabaseConnectionString();
     try

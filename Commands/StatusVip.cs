@@ -25,7 +25,7 @@ public partial class VipManager
     }
     if (CanExecuteCommand(player.Slot))
     {
-      var findPlayerAdmins = PlayerAdmins.FindAll(obj => obj.SteamId == player.SteamID.ToString());
+      var findPlayerAdmins = PlayerAdmins.GetValueOrDefault(player.SteamID);
 
       if (findPlayerAdmins == null)
       {
@@ -33,9 +33,12 @@ public partial class VipManager
         return;
       }
 
+
+      Menu(Localizer["RolesMenu"], player, handleMenu, findPlayerAdmins.Select(obj => obj.Group.ToUpper()).ToList(), Config.CloseMenuAfterUse);
+
       void handleMenu(CCSPlayerController player, ChatMenuOption option)
       {
-        var getPlayer = findPlayerAdmins.Find(obj => obj.Group.ToLower() == option.Text.ToLower());
+        var getPlayer = findPlayerAdmins.FirstOrDefault(obj => obj.Group.Equals(option.Text, StringComparison.CurrentCultureIgnoreCase));
         if (getPlayer == null)
         {
           player.PrintToChat($"{Localizer["Prefix"]} {Localizer["RoleNotFound"]}");
@@ -43,14 +46,10 @@ public partial class VipManager
         }
         player.PrintToChat(Localizer["Status", getPlayer.Group.ToUpper(), getPlayer.CreatedAt, getPlayer.EndAt]);
       }
-
-      Menu(Localizer["RolesMenu"], player, handleMenu, findPlayerAdmins.Select(obj => obj.Group.ToUpper()).ToList(), Config.CloseMenuAfterUse);
-
     }
     else
     {
       command.ReplyToCommand($"{Localizer["Prefix"]} {Localizer["CoolDown", Config.CooldownRefreshCommandSeconds]}");
-
     }
 
   }

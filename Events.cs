@@ -36,52 +36,14 @@ public partial class VipManager
     }
     return HookResult.Continue;
   }
-  private void OnMapStart(string mapName)
-  {
-    if (!isSynced)
-      Task.Run(async () =>
-      {
-        await CreateDatabaseTables();
-        if (Config.Groups.Enabled) await HandleGroupsFile();
-        await GetAdminsFromDatabase();
-      });
-  }
-  private void OnMapEnd()
-  {
-    isSynced = false;
-  }
   private void OnClientAuthorized(int playerSlot, SteamID steamId)
   {
     CCSPlayerController? player = Utilities.GetPlayerFromSlot(playerSlot);
 
     if (player == null || !player.IsValid || player.IsBot) return;
+    ulong steamid = steamId.SteamId64;
 
-    if (!isSynced)
-    {
-      Task.Run(async () =>
-      {
-        int cont = 0;
-        while (!isSynced && cont < 6)
-        {
-          cont += 1;
-          await Task.Delay(2000);
-          Logger.LogError("The Admin List has not been synchronized yet, trying to sync again...");
-        }
-
-        if (cont >= 6)
-        {
-          Logger.LogError("The Admin List has not been synchronized. The plugin has stopped trying to sync, check for the issue.");
-          return;
-        }
-      });
-    }
-
-    var findPlayerAdmins = PlayerAdmins.FindAll(obj => obj.SteamId == steamId.SteamId64.ToString());
-
-    if (findPlayerAdmins != null)
-    {
-      AdminManager.AddPlayerToGroup(steamId, findPlayerAdmins.Select(obj => $"#css/{obj.Group}").ToArray());
-    }
+    Task.Run(() => ReloadUserPermissions(steamid));
   }
   private void OnClientDisconnect(int playerSlot)
   {

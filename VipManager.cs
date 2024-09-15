@@ -1,4 +1,5 @@
-﻿using CounterStrikeSharp.API.Core;
+﻿using System.Collections.Concurrent;
+using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes;
 using static CounterStrikeSharp.API.Core.Listeners;
 
@@ -13,16 +14,13 @@ public partial class VipManager : BasePlugin, IPluginConfig<VipManagerConfig>
   public override string ModuleAuthor => "1MaaaaaacK";
   public override string ModuleVersion => "1.6";
   public static int ConfigVersion => 7;
-  private readonly List<PlayerAdminsClass> PlayerAdmins = [];
+  private readonly ConcurrentDictionary<ulong, PlayerAdminsClass[]> PlayerAdmins = [];
   private readonly List<string> GroupsName = [];
   private readonly Dictionary<int, DateTime> commandCooldown = [];
-  private bool isSynced = false;
   public override void Load(bool hotReload)
   {
 
     RegisterListener<OnClientAuthorized>(OnClientAuthorized);
-    RegisterListener<OnMapStart>(OnMapStart);
-    RegisterListener<OnMapEnd>(OnMapEnd);
     RegisterListener<OnClientDisconnect>(OnClientDisconnect);
     RegisterListener<OnClientPutInServer>(OnClientPutInServer);
 
@@ -30,17 +28,12 @@ public partial class VipManager : BasePlugin, IPluginConfig<VipManagerConfig>
     RegisterEventHandler<EventPlayerDisconnect>(OnPlayerDisconnect);
 
 
-    AddCommand($"css_{Config.Commands.AddPrefix}", "Set Admin", SetAdmin);
-    AddCommand($"css_{Config.Commands.RemovePrefix}", "Remove Admin", RemoveAdmin);
     AddCommand($"css_{Config.Commands.ReloadPrefix}", "Reload Admins", ReloadAdmins);
     AddCommand($"css_{Config.Commands.TestPrefix}", "Test VIP", TesteVip);
     AddCommand($"css_{Config.Commands.StatusPrefix}", "Check your vip time left", StatusVip);
 
-    Task.Run(async () =>
-    {
-      await CreateDatabaseTables();
-      if (Config.Groups.Enabled) await HandleGroupsFile();
-      await GetAdminsFromDatabase();
-    });
+
+    CreateDatabaseTables();
+    if (Config.Groups.Enabled) HandleGroupsFile();
   }
 }

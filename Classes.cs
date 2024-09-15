@@ -4,7 +4,6 @@ public partial class VipManager
 {
   public class PlayerAdminsClass
   {
-    public required string SteamId { get; set; }
     public required string Group { get; set; }
     public required string CreatedAt { get; set; }
     public required string EndAt { get; set; }

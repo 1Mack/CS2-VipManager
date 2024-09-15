@@ -82,14 +82,6 @@ public class VipTest
 }
 public class Commands
 {
-  [JsonPropertyName("AddPrefix")]
-  public string AddPrefix { get; set; } = "vm_add";
-  [JsonPropertyName("AddPermission")]
-  public string AddPermission { get; set; } = "@css/root";
-  [JsonPropertyName("RemovePrefix")]
-  public string RemovePrefix { get; set; } = "vm_remove";
-  [JsonPropertyName("RemovePermission")]
-  public string RemovePermission { get; set; } = "@css/root";
   [JsonPropertyName("ReloadPrefix")]
   public string ReloadPrefix { get; set; } = "vm_reload";
   [JsonPropertyName("ReloadPermission")]

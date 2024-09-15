@@ -1,3 +1,4 @@
+using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Commands;
@@ -27,8 +28,13 @@ public partial class VipManager
       return;
 
     }
+    ulong steamid;
+    foreach (var p in Utilities.GetPlayers().Where(p => p != null && p.IsValid && !p.IsBot && p.AuthorizedSteamID != null))
+    {
+      steamid = p.AuthorizedSteamID!.SteamId64;
+      Task.Run(() => ReloadUserPermissions(steamid));
 
-    Task.Run(GetAdminsFromDatabase);
+    }
 
     command.ReplyToCommand($"{Localizer["Prefix"]} {Localizer["AdminReloadSuccess"]}");
   }

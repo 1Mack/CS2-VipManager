@@ -33,7 +33,7 @@ public partial class VipManager
         return;
       }
 
-      if (Config.Groups.Enabled && GroupsName.Find(g => g.ToLower() == Config.VipTest.Group.ToLower()) == null)
+      if (Config.Groups.Enabled && GroupsName.Find(g => g.Equals(Config.VipTest.Group, StringComparison.CurrentCultureIgnoreCase)) == null)
       {
         command.ReplyToCommand($"{Localizer["Prefix"]} {Localizer["MissingGroup", Config.VipTest.Group]}");
         return;
@@ -87,7 +87,7 @@ public partial class VipManager
 
         task3.Wait();
 
-        ReloadUserPermissions(steamid, Config.VipTest.Group, "add", Config.VipTest.Time);
+        //ReloadUserPermissions(ulong.Parse(steamid));
 
         command.ReplyToCommand($"{Localizer["Prefix"]} {Localizer["TestVipActivated", Config.VipTest.Time]}");
 
