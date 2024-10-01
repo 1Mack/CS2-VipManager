@@ -1,5 +1,6 @@
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Entities;
 using Microsoft.Extensions.Logging;
@@ -8,23 +9,6 @@ namespace VipManager;
 
 public partial class VipManager
 {
-  public HookResult OnPlayerConnect(EventPlayerConnect @event, GameEventInfo info)
-  {
-    if (@event.Userid != null && @event.Userid.IsValid && !@event.Bot && !@event.Userid.IsBot)
-    {
-      if (Config.ShowWelcomeMessageConnectedPrivate)
-      {
-        @event.Userid.PrintToChat(Localizer["WelComeMessage.ConnectPrivate", @event.Userid.PlayerName]);
-      }
-      else if (Config.ShowWelcomeMessageConnectedPublic)
-      {
-        Server.PrintToChatAll(Localizer["WelComeMessage.ConnectPublic", @event.Userid.PlayerName]);
-      }
-
-    }
-
-    return HookResult.Continue;
-  }
   public HookResult OnPlayerDisconnect(EventPlayerDisconnect @event, GameEventInfo info)
   {
     if (!@event.Userid!.IsBot)
@@ -36,21 +20,22 @@ public partial class VipManager
     }
     return HookResult.Continue;
   }
-  private void OnClientAuthorized(int playerSlot, SteamID steamId)
+  public HookResult OnPlayerFullConnect(EventPlayerConnectFull @event, GameEventInfo info)
   {
-    CCSPlayerController? player = Utilities.GetPlayerFromSlot(playerSlot);
+    CCSPlayerController? player = @event.Userid;
 
-    if (player == null || !player.IsValid || player.IsBot) return;
-    ulong steamid = steamId.SteamId64;
+    if (player == null || !player.IsValid || player.IsBot || player.AuthorizedSteamID == null) return HookResult.Continue;
 
-    Task.Run(() => ReloadUserPermissions(steamid));
+    commandCooldown.TryAdd(player.Slot, DateTime.UtcNow);
+
+    ulong steamid = player.AuthorizedSteamID.SteamId64;
+
+    Task.Run(() => ReloadUserPermissions(steamid, true));
+
+    return HookResult.Continue;
   }
   private void OnClientDisconnect(int playerSlot)
   {
     commandCooldown.Remove(playerSlot);
-  }
-  private void OnClientPutInServer(int playerSlot)
-  {
-    commandCooldown.Add(playerSlot, DateTime.UtcNow);
   }
 }

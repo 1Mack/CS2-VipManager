@@ -20,11 +20,9 @@ public partial class VipManager : BasePlugin, IPluginConfig<VipManagerConfig>
   public override void Load(bool hotReload)
   {
 
-    RegisterListener<OnClientAuthorized>(OnClientAuthorized);
     RegisterListener<OnClientDisconnect>(OnClientDisconnect);
-    RegisterListener<OnClientPutInServer>(OnClientPutInServer);
 
-    RegisterEventHandler<EventPlayerConnect>(OnPlayerConnect);
+    RegisterEventHandler<EventPlayerConnectFull>(OnPlayerFullConnect);
     RegisterEventHandler<EventPlayerDisconnect>(OnPlayerDisconnect);
 
 

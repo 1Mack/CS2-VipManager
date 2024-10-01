@@ -84,34 +84,67 @@ public partial class VipManager
     return playerClass;
   }
 
-  public async void ReloadUserPermissions(ulong steamId64)
+  public async void ReloadUserPermissions(ulong steamId64, bool? welComeMessage = false)
   {
+
     var admin = await GetAdminFromDatabase(steamId64.ToString());
+
+    HashSet<string> flags = [];
+    HashSet<string> groups = [];
+    uint immunity = 0;
     if (admin == null)
     {
       PlayerAdmins.Remove(steamId64, out var _);
       return;
     }
-    Console.WriteLine(admin.Count);
     List<PlayerAdminsClass> playerAdmins = [];
     admin.ForEach(adm =>
-     playerAdmins.Add(new PlayerAdminsClass()
-     {
-       Group = adm.group,
-       CreatedAt = adm.created_at.ToString(),
-       EndAt = adm.end_at.ToString()
-     })
-    );
-    foreach (var item in playerAdmins)
     {
-      Console.WriteLine(item);
+      playerAdmins.Add(new PlayerAdminsClass()
+      {
+        Group = adm.group,
+        CreatedAt = adm.created_at.ToString(),
+        EndAt = adm.end_at.ToString()
+      });
+
+      groups.Add($"#css/{adm.group}");
+
+      if (!string.IsNullOrEmpty(adm.flags))
+      {
+        foreach (string flag in adm.flags.Split(','))
+        {
+          flags.Add($"@css/{flag}");
+        }
+      }
+      if (!string.IsNullOrEmpty(adm.immunity) && uint.Parse(adm.immunity) > immunity) immunity = uint.Parse(adm.immunity);
     }
+    );
+
     PlayerAdmins.AddOrUpdate(steamId64, key => [.. playerAdmins], (key, oldValue) => [.. playerAdmins]);
 
     Server.NextFrame(() =>
     {
       CCSPlayerController? player = Utilities.GetPlayerFromSteamId(steamId64);
-      AdminManager.AddPlayerToGroup(player, playerAdmins.Select(obj => $"#css/{obj.Group}").ToArray());
+      if (player == null)
+      {
+        Logger.LogWarning($"VipManager >> A seguinte steamid {steamId64} tem cargo mas o player não foi encontrado in-game");
+        return;
+      }
+      AdminManager.AddPlayerPermissions(player, [.. flags]);
+      AdminManager.AddPlayerToGroup(player, [.. groups]);
+      AdminManager.SetPlayerImmunity(player, immunity);
+
+      if (welComeMessage == true)
+      {
+        if (Config.ShowWelcomeMessageConnectedPrivate)
+        {
+          player.PrintToChat(Localizer["WelComeMessage.ConnectPrivate", player.PlayerName]);
+        }
+        else if (Config.ShowWelcomeMessageConnectedPublic)
+        {
+          Server.PrintToChatAll(Localizer["WelComeMessage.ConnectPublic", player.PlayerName]);
+        }
+      }
     });
 
 
@@ -207,7 +240,7 @@ public partial class VipManager
 
        await ExecuteAsync(query, new { server = Config.ServerID, endAt }); */
 
-      string query = @$"select * from `{Config.Database.PrefixVipManager}`
+      string query = @$"select V.*, G.flags, G.immunity from `{Config.Database.PrefixVipManager}` V INNER JOIN `{Config.Database.PrefixGroups}` G ON G.name = V.group
        WHERE ( server_id = @server OR server_id = 0) AND (end_at = 0 AND end_at <= @endAt) order by steamid";
 
       var queryResult = await QueryAsync<AdminsDatabaseClass>(query, new { server = Config.ServerID, endAt });
